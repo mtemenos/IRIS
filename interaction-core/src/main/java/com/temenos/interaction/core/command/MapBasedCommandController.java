@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * (keyed with names of the commands to be assigned). Replaces NewCommandController.
  * The class instances are thread safe, and individual commands can be added to the map returned by getCommandMap().
  * 
- * @author ktrojan
+ * @author trojanbug
  */
 public class MapBasedCommandController implements CommandController {
 
@@ -40,19 +40,17 @@ public class MapBasedCommandController implements CommandController {
     private Map<String, InteractionCommand> commandMap = new ConcurrentHashMap<String, InteractionCommand>();
 
     public MapBasedCommandController() {
-        logger.debug("Empty MapBasedCommandController created: " + this);
+        logger.trace("Empty MapBasedCommandController created: " + this);
     }
 
     public MapBasedCommandController(Map<String, InteractionCommand> commandMap) {
-        logger.debug("MapBasedCommandController created: " + this);
+        logger.trace("MapBasedCommandController created: " + this);
         setCommandMap(commandMap);
     }
 
     @Override
     public InteractionCommand fetchCommand(String name) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Retrieving command for name " + name + " from MapBasedCommandController " + this);
-        }
+        logger.trace("Retrieving command for name {} from MapBasedCommandController {}", name, this);
         return commandMap.get(name);
     }
 
@@ -72,7 +70,7 @@ public class MapBasedCommandController implements CommandController {
      * @param commandMap the commandMap to set
      */
     public final void setCommandMap(Map<String, InteractionCommand> commandMap) {
-        logger.debug("New command map set on MapBasedCommandController" + this.toString());
+        logger.trace("New command map set on MapBasedCommandController {}",this);
         this.commandMap = new ConcurrentHashMap(commandMap);
     }
 

@@ -69,7 +69,7 @@ public class MultipleGetITCase extends JerseyTest {
 				.getFamily());
 
 		RepresentationFactory representationFactory = new StandardRepresentationFactory();
-		ReadableRepresentation resource = representationFactory.readRepresentation(new InputStreamReader(response
+		ReadableRepresentation resource = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),new InputStreamReader(response
 				.getEntityInputStream()));
 		Map<String, Object> props = resource.getProperties();
 

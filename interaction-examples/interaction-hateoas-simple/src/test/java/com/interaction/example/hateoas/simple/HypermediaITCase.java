@@ -76,7 +76,7 @@ public class HypermediaITCase extends JerseyTest {
 				.getFamily());
 
 		RepresentationFactory representationFactory = new StandardRepresentationFactory();
-		ReadableRepresentation resource = representationFactory.readRepresentation(new InputStreamReader(response
+		ReadableRepresentation resource = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),new InputStreamReader(response
 				.getEntityInputStream()));
 
 		List<Link> links = resource.getLinks();
@@ -104,7 +104,7 @@ public class HypermediaITCase extends JerseyTest {
 				.getFamily());
 
 		RepresentationFactory representationFactory = new StandardRepresentationFactory();
-		ReadableRepresentation resource = representationFactory.readRepresentation(new InputStreamReader(response
+		ReadableRepresentation resource = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),new InputStreamReader(response
 				.getEntityInputStream()));
 
 		// the embedded resources
@@ -130,7 +130,7 @@ public class HypermediaITCase extends JerseyTest {
 				.getFamily());
 
 		RepresentationFactory representationFactory = new StandardRepresentationFactory();
-		ReadableRepresentation resource = representationFactory.readRepresentation(new InputStreamReader(response
+		ReadableRepresentation resource = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),new InputStreamReader(response
 				.getEntityInputStream()));
 
 		// the links from the collection
@@ -233,7 +233,7 @@ public class HypermediaITCase extends JerseyTest {
 				.getFamily());
 
 		RepresentationFactory representationFactory = new StandardRepresentationFactory();
-		ReadableRepresentation resource = representationFactory.readRepresentation(new InputStreamReader(response
+		ReadableRepresentation resource = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),new InputStreamReader(response
 				.getEntityInputStream()));
 
 		// the links from the collection
@@ -304,7 +304,7 @@ public class HypermediaITCase extends JerseyTest {
 				.getFamily());
 
 		RepresentationFactory representationFactory = new StandardRepresentationFactory();
-		ReadableRepresentation resource = representationFactory.readRepresentation(new InputStreamReader(response
+		ReadableRepresentation resource = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),new InputStreamReader(response
 				.getEntityInputStream()));
 
 		// the items in the collection
@@ -350,7 +350,7 @@ public class HypermediaITCase extends JerseyTest {
 				.getFamily());
 
 		RepresentationFactory representationFactory = new StandardRepresentationFactory();
-		ReadableRepresentation resource = representationFactory.readRepresentation(new InputStreamReader(response
+		ReadableRepresentation resource = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),new InputStreamReader(response
 				.getEntityInputStream()));
 
 		// the items in the collection
@@ -394,7 +394,7 @@ public class HypermediaITCase extends JerseyTest {
 				.getFamily());
 
 		RepresentationFactory representationFactory = new StandardRepresentationFactory();
-		ReadableRepresentation resource = representationFactory.readRepresentation(new InputStreamReader(response
+		ReadableRepresentation resource = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),new InputStreamReader(response
 				.getEntityInputStream()));
 
 		// the items in the collection
@@ -424,7 +424,7 @@ public class HypermediaITCase extends JerseyTest {
 			assertEquals(Response.Status.Family.SUCCESSFUL, Response.Status.fromStatusCode(getResponse.getStatus())
 					.getFamily());
 			// the item
-			ReadableRepresentation itemResource = representationFactory.readRepresentation(new InputStreamReader(
+			ReadableRepresentation itemResource = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),new InputStreamReader(
 					getResponse.getEntityInputStream()));
 			List<Link> links = itemResource.getLinks();
 			assertNotNull(links);

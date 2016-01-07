@@ -111,7 +111,7 @@ public class LinkRelationsITCase extends JerseyTest {
 					.get(ClientResponse.class);
 			assertEquals(Status.Family.SUCCESSFUL, response.getClientResponseStatus().getFamily());
 			reader = new InputStreamReader(response.getEntityInputStream());
-			representation = representationFactory.readRepresentation(reader);
+			representation = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),reader);
 		} finally {
 			if (reader != null)
 				reader.close();
@@ -132,7 +132,7 @@ public class LinkRelationsITCase extends JerseyTest {
 					.post(ClientResponse.class, payload);
 			assertEquals(Status.Family.SUCCESSFUL, response.getClientResponseStatus().getFamily());
 			reader = new InputStreamReader(response.getEntityInputStream());
-			representation = representationFactory.readRepresentation(reader);
+			representation = representationFactory.readRepresentation(MediaType.APPLICATION_HAL_JSON.toString(),reader);
 		} finally {
 			if (reader != null)
 				reader.close();

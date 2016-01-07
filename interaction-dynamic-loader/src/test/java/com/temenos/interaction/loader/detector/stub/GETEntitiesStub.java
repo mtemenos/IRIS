@@ -1,4 +1,9 @@
-package com.temenos.interaction.loader.detector;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.temenos.interaction.loader.detector.stub;
 
 /*
  * #%L
@@ -21,34 +26,20 @@ package com.temenos.interaction.loader.detector;
  * #L%
  */
 
-import com.temenos.interaction.core.loader.Action;
-import com.temenos.interaction.core.loader.FileEvent;
-import java.io.File;
+import com.temenos.interaction.core.command.InteractionCommand;
+import static com.temenos.interaction.core.command.InteractionCommand.Result.SUCCESS;
+import com.temenos.interaction.core.command.InteractionContext;
+import com.temenos.interaction.core.command.InteractionException;
 
 /**
  *
  * @author andres
  */
-public class DirectoryEventInterestedActionTestStub implements Action<FileEvent<File>> {
-    
-    private int callCount = 0;
-    private FileEvent<File> lastEvent;
-    
-    @Override
-    public void execute(FileEvent<File> event) {
-       callCount++;
-       lastEvent = event;
-    }
-    
-    public int getCallCount() {
-        return callCount;
-    }
+public class GETEntitiesStub implements InteractionCommand {
 
-    /**
-     * @return the lastEvent
-     */
-    public FileEvent<File> getLastEvent() {
-        return lastEvent;
+    public Result execute(InteractionContext ctx) throws InteractionException {       
+        
+        return SUCCESS;
     }
-    
+ 
 }

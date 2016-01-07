@@ -1,7 +1,6 @@
 package com.temenos.interaction.rimdsl.formatting;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -22,48 +21,66 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.temenos.interaction.rimdsl.RIMDslInjectorProvider;
 import com.temenos.interaction.rimdsl.rim.DomainModel;
+import java.io.BufferedReader;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Tests Formatting.
- * 
+ *
  * @author aphethean
  */
 @RunWith(XtextRunner.class)
 @InjectWith(RIMDslInjectorProvider.class)
 public class FormatterTest {
 
-	@Inject
-	ParseHelper<DomainModel> parser;
-	
-	@Inject INodeModelFormatter formatter;
-	
-	
-	@Test
-	public void testFormatting() throws Exception {
-		String text = loadTestRIM("Simple.rim");
-		DomainModel domainModel = parser.parse(text);
+    @Inject
+    ParseHelper<DomainModel> parser;
+
+    @Inject
+    INodeModelFormatter formatter;
+
+    @Test
+    public void testFormatting() throws Exception {
+        String text = loadTestRIM("Simple.rim");
+        DomainModel domainModel = parser.parse(text);
         IParseResult parseResult = ((XtextResource) domainModel.eResource()).getParseResult();
         assertNotNull(parseResult);
-		ICompositeNode rootNode = parseResult.getRootNode();
-		String formattedText = formatter.format(rootNode, 0, text.length()).getFormattedText();
-		assertEquals(text, formattedText);
-	}
+        ICompositeNode rootNode = parseResult.getRootNode();
+        String formattedText = formatter.format(rootNode, 0, text.length()).getFormattedText();
+        assertEquals(toNormalizedLineList(text),toNormalizedLineList(formattedText));
+    }
 
-	@Test
-	public void testFormattingWithDomain() throws Exception {
-		String text = loadTestRIM("TestFormat.rim");
-		DomainModel domainModel = parser.parse(text);
+    @Test
+    public void testFormattingWithDomain() throws Exception {
+        String text = loadTestRIM("TestFormat.rim");
+        DomainModel domainModel = parser.parse(text);
         IParseResult parseResult = ((XtextResource) domainModel.eResource()).getParseResult();
         assertNotNull(parseResult);
-		ICompositeNode rootNode = parseResult.getRootNode();
-		String formattedText = formatter.format(rootNode, 0, text.length()).getFormattedText();
-		assertEquals(text, formattedText);
-	}
+        ICompositeNode rootNode = parseResult.getRootNode();
+        String formattedText = formatter.format(rootNode, 0, text.length()).getFormattedText();
+        assertEquals(toNormalizedLineList(text),toNormalizedLineList(formattedText));
+    }
 
-	private String loadTestRIM(String rimPath) throws IOException {
-		URL url = Resources.getResource(rimPath);
-		String rim = Resources.toString(url, Charsets.UTF_8);
-		return rim;
-	}
+    private String loadTestRIM(String rimPath) throws IOException {
+        URL url = Resources.getResource(rimPath);
+        String rim = Resources.toString(url, Charsets.UTF_8);
+        return rim;
+    }
+
+    private String toNormalizedLineList(String source) throws IOException {
+        StringBuffer lines = new StringBuffer();
+
+        BufferedReader reader = new BufferedReader(new StringReader(source));
+
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+			line = line.trim();
+			if (!line.equals(""))
+              lines.append(line.trim()).append('\n');
+        }
+        return lines.toString();
+    }
 
 }

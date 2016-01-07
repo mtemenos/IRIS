@@ -292,12 +292,13 @@
     	<scope>runtime</scope>
     </dependency>
 
+<!--
     <dependency>
         <groupId>com.theoryinpractise</groupId>
         <artifactId>halbuilder-standard</artifactId>
         <version>3.0.1</version>
     </dependency>
-
+-->
     <!-- The dependency for JPA (note - this comes from the eclipse repository as Sun licensed this jar??) -->
     <dependency>
       <groupId>org.eclipse.persistence</groupId>

@@ -52,6 +52,16 @@ import com.temenos.interaction.sdk.interaction.state.IMPseudoState;
 import com.temenos.interaction.sdk.interaction.state.IMState;
 import com.temenos.interaction.sdk.interaction.IMResourceStateMachine;
 import com.temenos.interaction.sdk.interaction.InteractionModel;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.commons.io.IOUtils;
+import org.junit.Ignore;
+import org.odata4j.edm.EdmDataServices;
 
 /**
  * Unit test for {@link RimDslGenerator}.
@@ -77,7 +87,7 @@ public class TestRimDslGenerator {
 	public void testGenerateRimDslAirlinesSimple() {
 		//Define the basic interaction model based on the available metadata
 		Metadata metadata = parseMetadata(METADATA_AIRLINE_XML_FILE);
-		InteractionModel interactionModel = new InteractionModel(metadata);
+		InteractionModel interactionModel = new SortedInteractionModel(metadata);
 
 		//Add transitions
 		IMResourceStateMachine rsmFlightSchedule = interactionModel.findResourceStateMachine("FlightSchedule");
@@ -99,7 +109,7 @@ public class TestRimDslGenerator {
 		
 		//Check results
 		assertTrue(dsl != null && !dsl.equals(""));
-		assertEquals(readTextFile(RIM_DSL_AIRLINE_SIMPLE_FILE), dsl);
+		assertEquals(stripEmptyLinesAndTrim(readTextFile(RIM_DSL_AIRLINE_SIMPLE_FILE)), stripEmptyLinesAndTrim(dsl));
 	}
 	
 	@Test
@@ -111,7 +121,7 @@ public class TestRimDslGenerator {
 
 		//Check results
 		assertTrue(dsl != null && !dsl.equals(""));
-		assertEquals(readTextFile(RIM_DSL_AIRLINE_FILE), dsl);
+		assertEquals(stripEmptyLinesAndTrim(readTextFile(RIM_DSL_AIRLINE_FILE)), stripEmptyLinesAndTrim(dsl));
 	}
 
 	@Test
@@ -129,6 +139,7 @@ public class TestRimDslGenerator {
 		// check results for ServiceDocument
 		String root = interactionModel.getName();
 		rimDSL = dslMap.get(root);
+                rimDSL = stripEmptyLinesAndTrim(rimDSL);
 		assertTrue(rimDSL.contains("event GET"));
 		assertTrue(rimDSL.contains("initial resource ServiceDocument"));
 		assertTrue(rimDSL.contains("GET -> Flight_Schedule.FlightSchedules"));
@@ -140,12 +151,13 @@ public class TestRimDslGenerator {
 		
 		// check results for FlightSchedules
 		rimDSL = dslMap.get("Flight_Schedule");
+                rimDSL = stripEmptyLinesAndTrim(rimDSL);
 		assertTrue(rimDSL.contains("rim Flight_Schedule {"));
 		assertTrue(rimDSL.contains("event GET"));
 		assertTrue(rimDSL.contains("resource FlightSchedules"));
-		assertTrue(rimDSL.contains("GET *-> flightschedule {" + RIM_LINE_SEP
+		assertTrue(rimDSL.contains(stripEmptyLinesAndTrim("GET *-> flightschedule {" + RIM_LINE_SEP
 				+ "\t\tparameters [ id=\"{flightScheduleID}\" ]" + RIM_LINE_SEP
-				+ "\t}"));
+				+ "\t}")));
 		assertTrue(rimDSL.contains("resource flightschedule_departureAirport"));
 		assertTrue(rimDSL.contains("path: \"/FlightSchedules({id})/departureAirport\""));
 
@@ -185,7 +197,7 @@ public class TestRimDslGenerator {
 		assertTrue(dsl.contains("domain airline {"));
 	}
 
-	@Test
+        @Test
 	public void testGenerateRimDslAirlinesNonStrictOData() {
 		InteractionModel interactionModel = createAirlineModelDSL(null);
 		//Run the generator
@@ -194,7 +206,7 @@ public class TestRimDslGenerator {
 		
 		//Check results
 		assertTrue(dsl != null && !dsl.equals(""));
-		assertEquals(readTextFile(RIM_DSL_AIRLINE_NON_STRICT_ODATA_FILE), dsl);
+		assertEquals(stripEmptyLinesAndTrim(readTextFile(RIM_DSL_AIRLINE_NON_STRICT_ODATA_FILE)), stripEmptyLinesAndTrim(dsl));
 	}
 
 	@Test
@@ -239,13 +251,13 @@ public class TestRimDslGenerator {
 		//Run the generator
 		RimDslGenerator generator = new RimDslGenerator(createVelocityEngine());
 		String dsl = generator.generateRimDsl(interactionModel, commands, false);
-		assertEquals(readTextFile(RIM_DSL_BANKING_FILE), dsl);
+		assertEquals(stripEmptyLinesAndTrim(readTextFile(RIM_DSL_BANKING_FILE)), stripEmptyLinesAndTrim(dsl));
 	}
 	
 	public InteractionModel createAirlineModelDSL(String domain) {
 		//Define the basic interaction model based on the available metadata
 		Metadata metadata = parseMetadata(METADATA_AIRLINE_XML_FILE);
-		InteractionModel interactionModel = new InteractionModel(metadata);
+		InteractionModel interactionModel = new SortedInteractionModel(metadata);
 		interactionModel.setDomain(domain);
 		interactionModel.setExceptionState(new IMEntityState("InteractionException", "", Commands.GET_EXCEPTION));
 		IMState rsResponseErrors = new IMEntityState("ErrorMessages", "", Commands.GET_NOOP);
@@ -305,21 +317,26 @@ public class TestRimDslGenerator {
 	/*
 	 * Read a text file
 	 */
-	private String readTextFile(String textFile) {
-		InputStream is = this.getClass().getClassLoader().getResourceAsStream(textFile);
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		StringBuilder sb = new StringBuilder();
-		String read;
-		try {
-			while((read = br.readLine()) != null) {
-			    sb.append(read).append(System.getProperty("line.separator"));
-			}
-		}
-		catch(IOException ioe) {
-			fail(ioe.getMessage());
-		}
-		return sb.toString();		
-	}
+        private String readTextFile(String textFile) {
+            InputStream is = null;
+            try {
+                is = this.getClass().getClassLoader().getResourceAsStream(textFile);
+                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                StringBuilder sb = new StringBuilder();
+                String read;
+                while ((read = br.readLine()) != null) {
+                    sb.append(read).append(System.getProperty("line.separator"));
+                }
+                return sb.toString();            
+            } catch (IOException ioe) {
+                fail(ioe.getMessage());
+            } finally {
+                IOUtils.closeQuietly(is);
+            }
+
+            // cannot get here as fail(ioe.getMessage()) will prevent it throwing exception
+            return null;
+        }
 	
 	@Test
 	public void testGetRIM() {
@@ -356,21 +373,73 @@ public class TestRimDslGenerator {
 		catch(Exception age) {
 			fail(age.getMessage());
 		}
-
+                rimDSL = stripEmptyLinesAndTrim(rimDSL);
+                
 		//Check the rim dsl
 		assertTrue(rimDSL.contains("initial resource ServiceDocument"));
 		assertTrue(rimDSL.contains("GET -> FlightSchedules"));
 		assertTrue(rimDSL.contains("resource FlightSchedules"));
-		assertTrue(rimDSL.contains("GET *-> flightschedule {" + RIM_LINE_SEP
+		assertTrue(rimDSL.contains(stripEmptyLinesAndTrim("GET *-> flightschedule {" + RIM_LINE_SEP
 				+ "\t\tparameters [ id=\"{flightScheduleID}\" ]" + RIM_LINE_SEP
-				+ "\t}"));
-		assertTrue(rimDSL.contains("GET *-> flightschedule_departureAirport {" + RIM_LINE_SEP
+				+ "\t}")));
+		assertTrue(rimDSL.contains(stripEmptyLinesAndTrim("GET *-> flightschedule_departureAirport {" + RIM_LINE_SEP
 				+ "\t\tparameters [ id=\"{flightScheduleID}\" ]" + RIM_LINE_SEP
-				+ "\t}"));
+				+ "\t}")));
 		assertTrue(rimDSL.contains("resource flightschedule_departureAirport"));
 		assertTrue(rimDSL.contains("path: \"/FlightSchedules({id})/departureAirport\""));
 		assertTrue(rimDSL.contains("GET -> Passengers"));
 		assertTrue(rimDSL.contains("resource Passengers"));
 	}
+        
+        private String stripEmptyLinesAndTrim(String source) {
+            StringBuffer lines = new StringBuffer();
 
+            BufferedReader reader = new BufferedReader(new StringReader(source));
+
+            String line = null;
+            try {
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (!line.equals("")) {
+                        lines.append(line).append('\n');
+                    }
+                }
+            } catch (IOException ex) {
+               // can not really happen in StringReader
+            }
+            try {
+                reader.close();
+            } catch (IOException ex) {
+                // ignored on purpose
+            }
+            return lines.toString();
+        }
+        
+    public static class SortedInteractionModel extends InteractionModel {
+
+        public SortedInteractionModel(EdmDataServices edmds) {
+            super(edmds);
+        }
+
+        public SortedInteractionModel(Metadata metadata) {
+            super(metadata);
+        }
+
+        public SortedInteractionModel() {
+            super();
+        }
+
+        @Override
+        public List<IMResourceStateMachine> getResourceStateMachines() {
+            List<IMResourceStateMachine> list = new ArrayList(super.getResourceStateMachines());
+            Collections.sort(list, new Comparator<IMResourceStateMachine>() {
+
+                @Override
+                public int compare(IMResourceStateMachine t1, IMResourceStateMachine t2) {
+                    return t1.getEntityState().getName().compareTo(t2.getEntityState().getName());
+                }
+            });
+            return list;
+        }
+    }
 }

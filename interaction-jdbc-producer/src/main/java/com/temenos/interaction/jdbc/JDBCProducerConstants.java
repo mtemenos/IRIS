@@ -1,10 +1,10 @@
-package com.temenos.test.helperclasses;
+package com.temenos.interaction.jdbc;
 
 /*
  * #%L
- * interaction-dynamic-loader
+ * interaction-jdbc-producer
  * %%
- * Copyright (C) 2012 - 2015 Temenos Holdings N.V.
+ * Copyright (C) 2012 - 2016 Temenos Holdings N.V.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,11 +21,14 @@ package com.temenos.test.helperclasses;
  * #L%
  */
 
-
 /**
+ * Class to hold Constants used across JDBC Producer
  *
- * @author ktrojan
+ * @author sjunejo
+ *
  */
-public class AnnotatedClass1 {
-    
+public class JDBCProducerConstants {
+
+    public static final String SELECT_FIELD_NAME_ALIAS_SEP = "__AS__";
+    public static final int SELECT_FIELD_NAME_ALIAS_SEP_LEN = SELECT_FIELD_NAME_ALIAS_SEP.length();
 }

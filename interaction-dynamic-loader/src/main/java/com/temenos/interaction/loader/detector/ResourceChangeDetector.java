@@ -24,10 +24,11 @@ package com.temenos.interaction.loader.detector;
 import java.util.Collection;
 
 /**
- * TODO: Document me!
- *
+ * Interface for relating changes in a collection of resources with 
+ * a collection of listeners.
+ * 
  * @author andres
- *
+ * @author trojan
  */
 public interface ResourceChangeDetector<RESOURCE, LISTENER> {
     public void setResources(Collection<? extends RESOURCE> resources);

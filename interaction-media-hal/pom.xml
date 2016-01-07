@@ -51,6 +51,17 @@
 					</reportPlugins>
 				</configuration>
 			</plugin>
+			<plugin>
+			  <artifactId>maven-surefire-plugin</artifactId>
+			  <configuration>
+				<systemProperties>
+				  <property> 
+					<name>logback.configurationFile</name>
+					<value>src/test/resources/logback.xml</value>
+				  </property>
+				</systemProperties>
+			  </configuration>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -76,6 +87,12 @@
 		  <classifier>cdi1.0</classifier>
 		</dependency>
 
+		<dependency>
+			<groupId>commons-beanutils</groupId>
+			<artifactId>commons-beanutils</artifactId>
+			<version>1.9.2</version>
+			<scope>test</scope>
+		</dependency>
         <!-- This provider can also accept and transform OEntity objects into HAL -->
         <dependency>
             <groupId>org.odata4j</groupId>
@@ -114,7 +131,15 @@
             <groupId>xmlunit</groupId>
             <artifactId>xmlunit</artifactId>
             <scope>test</scope>
-        </dependency>        
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>0.9.29</version>
+            <scope>test</scope>
+        </dependency>
+
+		  
  	</dependencies>
 
 	<!-- SONAR TEST COVERAGE PROFILE-->

@@ -102,6 +102,12 @@
 						<resourceBase>${basedir}/src/main/webapp</resourceBase>
 					</resourceBases>
 				</webApp>
+                                <systemProperties>
+                                    <systemProperty>
+                                        <name>hot.deploy.dir</name>
+                                        <value>${project.build.directory}/hot-deploy</value>
+                                    </systemProperty>
+                                </systemProperties>
 			</configuration>
 			<executions>
 				<execution>
@@ -268,6 +274,10 @@
     	<artifactId>interaction-core</artifactId>
     	<type>jar</type>
     	<scope>compile</scope>
+    </dependency>
+        <dependency>
+    	<groupId>com.temenos.interaction</groupId>
+    	<artifactId>interaction-dynamic-loader</artifactId>
     </dependency>
     <dependency>
     	<groupId>com.temenos.interaction</groupId>

@@ -27,8 +27,8 @@ initial resource ServiceDocument {
 	entity: ServiceDocument
 	view: GETServiceDocument
 	path: "/"
-	GET -> Flights
 	GET -> Airports
+	GET -> Flights
 	GET -> FlightSchedules
 	GET -> Passengers
 	GET -> ErrorMessages
@@ -46,49 +46,6 @@ resource ErrorMessages {
 	view: NoopGET
 }
 
-
-resource Flights {
-	type: collection
-	entity: Flight
-	view: GETEntities
-	path: "/Flights()"
-	POST -> Flights_created
-	GET *-> flight {
-		parameters [ id="{flightID}" ]
-	}
-	GET *-> flight_flightschedule {
-		title: "flightschedule"
-		parameters [ id="{flightID}" ]
-	}
-}
-
-resource flight {
-	type: item
-	entity: Flight
-	view: GETEntity
-	path: "/Flights({id})"
-	GET -> flight_flightschedule {
-		title: "flightschedule"
-		parameters [ id="{flightID}" ]
-	}
-}
-
-resource Flights_created {
-	type: item
-	entity: Flight
-	actions [ CreateEntity ]
-	path: "/Flights()"
-	onerror --> ErrorMessages
-}
-
-resource flight_flightschedule {
-	type: item
-	entity: FlightSchedule
-	view: GETNavProperty {
-		properties [ navproperty="flightschedule", entity=Flight ]
-	}
-	path: "/Flights({id})/flightschedule"
-}
 
 resource Airports {
 	type: collection
@@ -169,6 +126,49 @@ resource airport_departures {
 		title: "arrivalAirport"
 		parameters [ id="{flightScheduleID}" ]
 	}
+}
+
+resource Flights {
+	type: collection
+	entity: Flight
+	view: GETEntities
+	path: "/Flights()"
+	POST -> Flights_created
+	GET *-> flight {
+		parameters [ id="{flightID}" ]
+	}
+	GET *-> flight_flightschedule {
+		title: "flightschedule"
+		parameters [ id="{flightID}" ]
+	}
+}
+
+resource flight {
+	type: item
+	entity: Flight
+	view: GETEntity
+	path: "/Flights({id})"
+	GET -> flight_flightschedule {
+		title: "flightschedule"
+		parameters [ id="{flightID}" ]
+	}
+}
+
+resource Flights_created {
+	type: item
+	entity: Flight
+	actions [ CreateEntity ]
+	path: "/Flights()"
+	onerror --> ErrorMessages
+}
+
+resource flight_flightschedule {
+	type: item
+	entity: FlightSchedule
+	view: GETNavProperty {
+		properties [ navproperty="flightschedule", entity=Flight ]
+	}
+	path: "/Flights({id})/flightschedule"
 }
 
 resource FlightSchedules {

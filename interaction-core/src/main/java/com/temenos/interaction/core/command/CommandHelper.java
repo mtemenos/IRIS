@@ -22,7 +22,6 @@ package com.temenos.interaction.core.command;
  */
 
 
-import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -33,6 +32,9 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import com.temenos.interaction.core.entity.Entity;
 import com.temenos.interaction.core.resource.EntityResource;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 
 public class CommandHelper {
@@ -110,45 +112,19 @@ public class CommandHelper {
 				Type type = types[i];
 				if(type instanceof TypeVariable) {
 					final TypeVariable<?> typeVar = (TypeVariable<?>) type;
-					newActualTypeArguments[i] = new TypeVariable() {
-						@Override
-						public Type[] getBounds() {
-							return typeVar.getBounds();
-						}
-
-						@Override
-						public GenericDeclaration getGenericDeclaration() {
-							return typeVar.getGenericDeclaration();
-						}
-
-						@Override
-						public String getName() {
-							return entityType.getSimpleName();
-						}
-						
-					};
+					newActualTypeArguments[i] = (TypeVariable) Proxy.newProxyInstance(
+                                                typeVar.getClass().getClassLoader(), 
+                                                new Class[]{TypeVariable.class}, 
+                                                new TypeVariableHandler(typeVar, entityType));
 				}
 			}
 			newGenericType = ParameterizedTypeImpl.make((Class<?>) parametrizedType.getRawType(), newActualTypeArguments, parametrizedType.getOwnerType());
 		} else if (superClassType instanceof TypeVariable) {
 			final TypeVariable<?> typeVar = (TypeVariable<?>) superClassType;
-			Type t = new TypeVariable() {
-				@Override
-				public Type[] getBounds() {
-					return typeVar.getBounds();
-				}
-
-				@Override
-				public GenericDeclaration getGenericDeclaration() {
-					return typeVar.getGenericDeclaration();
-				}
-
-				@Override
-				public String getName() {
-					return entityType.getSimpleName();
-				}
-				
-			};
+			Type t = (TypeVariable) Proxy.newProxyInstance(
+                                                typeVar.getClass().getClassLoader(), 
+                                                new Class[]{TypeVariable.class}, 
+                                                new TypeVariableHandler(typeVar, entityType));
 			newGenericType = t; 
 		}
 		else {
@@ -156,4 +132,42 @@ public class CommandHelper {
 		}
 		return newGenericType;
 	}
+        
+        private static class TypeVariableHandler implements InvocationHandler {
+
+            private final TypeVariable<?> typeVar;
+            private final Class<?> entityType;
+
+            public TypeVariableHandler(TypeVariable<?> typeVar, Class<?> entityType) {
+                this.typeVar = typeVar;
+                this.entityType = entityType;
+            }
+
+            @Override
+            public Object invoke(Object o, Method method, Object[] os) throws Throwable {
+                final String methodName = method.getName();
+                if ("getBounds".equals(methodName)) {
+                    return typeVar.getBounds();
+                }
+                if ("getGenericDeclaration".equals(methodName)) {
+                    return typeVar.getGenericDeclaration();
+                }
+                if ("getName".equals(methodName)) {
+                    return entityType.getSimpleName();
+                }
+                if ("getAnnotatedBounds".equals(methodName)) {
+                    return method.invoke(typeVar, os);
+                }
+                if ("getAnnotation".equals(methodName)) {
+                    return method.invoke(typeVar, os);
+                }
+                if ("getAnnotations".equals(methodName)) {
+                    return method.invoke(typeVar, os);
+                }
+                if ("getDeclaredAnnotations".equals(methodName)) {
+                    return method.invoke(typeVar, os);
+                }
+                return null;
+            }
+        }
 }

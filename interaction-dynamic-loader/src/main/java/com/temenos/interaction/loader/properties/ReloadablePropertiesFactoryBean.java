@@ -31,9 +31,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import org.springframework.beans.BeansException;
@@ -60,7 +58,6 @@ public class ReloadablePropertiesFactoryBean extends PropertiesFactoryBean imple
 		DisposableBean, ApplicationContextAware {
 	private ApplicationContext ctx;
 
-	private Map<Resource, Long> locations;
 	private List<ReloadablePropertiesListener> preListeners;
 	private PropertiesPersister propertiesPersister = new DefaultPropertiesPersister();
 	private ReloadablePropertiesBase reloadableProperties;
@@ -71,7 +68,7 @@ public class ReloadablePropertiesFactoryBean extends PropertiesFactoryBean imple
 	private XmlModificationNotifier xmlNotifier = null;
 
 	public void setListeners(List<ReloadablePropertiesListener> listeners) {
-		// early type check, and avoid aliassing
+		// early type check, and avoid aliasing
 		this.preListeners = new ArrayList<ReloadablePropertiesListener>();
 		for (ReloadablePropertiesListener l : listeners) {
 			preListeners.add(l);
@@ -134,15 +131,12 @@ public class ReloadablePropertiesFactoryBean extends PropertiesFactoryBean imple
 
 	protected void reload(boolean forceReload) throws IOException {
 		long l = System.currentTimeMillis();
-		boolean oldReload = System.getProperty("old.reload") != null;
-		if (oldReload) {
-			reload_old(forceReload);
-		} else {
-			reload_new(forceReload);
-		}
+		
+		reload_new(forceReload);
+		
 		l = System.currentTimeMillis() - l;
 		if (l > 2000) {
-			logger.warn("Reload time " + (oldReload ? "(old) : " : "(new) : ") + l + " ms.");
+			logger.warn("Reload time " + l + " ms.");
 		}
 	}
 
@@ -164,6 +158,19 @@ public class ReloadablePropertiesFactoryBean extends PropertiesFactoryBean imple
 				}
 			}
 		}
+		
+		String irisCacheIndexFileStr = System.getProperty("iris.cache.index.file");				
+		
+		if(irisCacheIndexFileStr != null) {		    
+    		File irisCacheIndexFile = new File(irisCacheIndexFileStr).getAbsoluteFile();
+    		
+    		if(irisCacheIndexFile.exists()) {
+    		    lastChangeFile = irisCacheIndexFile;
+    		    logger.info("The following index file will be used for refreshing resources: " + irisCacheIndexFile.getAbsolutePath());
+    		}
+    		
+		}
+
 		return ret;
 
 	}
@@ -354,94 +361,6 @@ public class ReloadablePropertiesFactoryBean extends PropertiesFactoryBean imple
 
 	}
 
-	protected void reload_old(boolean forceReload) throws IOException {
-		List<Resource> tmpLocations = new ArrayList<Resource>();
-
-		for (ReloadablePropertiesListener listener : preListeners) {
-			String[] patterns = listener.getResourcePatterns();
-
-			for (String pattern : patterns) {
-				tmpLocations.addAll(Arrays.asList(ctx.getResources(pattern)));
-			}
-		}
-
-		boolean reload = forceReload;
-
-		if (locations == null) {
-			// Uninitialized - Load everything
-			locations = new HashMap<Resource, Long>();
-
-			for (Resource location : tmpLocations) {
-				addNewLocation(location);
-
-				reload = true;
-			}
-		} else {
-			// Process new and modified
-			for (Resource location : tmpLocations) {
-
-				if (locations.containsKey(location)) {
-					// Existing location
-					File file = new File(location.getURL().getFile());
-					long lastModified = file.lastModified();
-
-					if (lastModified > locations.get(location)) {
-						// Identified modification
-
-						// Update entry in locations
-						locations.put(location, lastModified);
-
-						// Load properties file
-						Properties newProperties = new Properties();
-						propertiesPersister.load(newProperties, location.getInputStream());
-
-						// Notify subscribers that properties have been modified
-						reloadableProperties.notifyPropertiesChanged(location, newProperties);
-
-						reload = true;
-					}
-				} else {
-					// New location
-					addNewLocation(location);
-
-					reload = true;
-				}
-			}
-		}
-
-		// Set locations on parent ready for merging of properties with
-		// overrides
-		super.setLocations(tmpLocations.toArray(new Resource[0]));
-
-		// TODO Handle removing states
-
-		if (reload) {
-			doReload();
-			logger.info("Finished Refreshing IRIS");
-		}
-	}
-
-	/**
-	 * @param location
-	 * @throws IOException
-	 */
-	private void addNewLocation(Resource location) throws IOException {
-		// Add entry to locations
-		File file = new File(location.getURL().getFile());
-		locations.put(location, file.lastModified());
-
-		// Load properties file
-		Properties newProperties = new Properties();
-		propertiesPersister.load(newProperties, location.getInputStream());
-
-		// Notify subscribers that new properties have been loaded
-		reloadableProperties.notifyPropertiesLoaded(location, newProperties);
-	}
-
-	private void doReload() throws IOException {
-		reloadableProperties.setProperties(mergeProperties());
-	}
-
 	class ReloadablePropertiesImpl extends ReloadablePropertiesBase implements ReconfigurableBean {
 		private static final long serialVersionUID = -3401718333944329073L;
 
@@ -470,5 +389,4 @@ public class ReloadablePropertiesFactoryBean extends PropertiesFactoryBean imple
 			return s.startsWith(startsWith) && s.endsWith(endsWith);
 		}
 	}
-
 }

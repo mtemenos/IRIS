@@ -48,7 +48,6 @@ import com.temenos.interaction.core.command.InteractionCommand;
 import com.temenos.interaction.core.command.InteractionCommand.Result;
 import com.temenos.interaction.core.command.InteractionContext;
 import com.temenos.interaction.core.command.InteractionException;
-import com.temenos.interaction.core.command.ModifiableCommandController;
 import com.temenos.interaction.core.command.NewCommandController;
 import com.temenos.interaction.core.command.NoopGETCommand;
 import com.temenos.interaction.core.entity.EntityMetadata;
@@ -72,7 +71,7 @@ public class TestResourceGETExpression {
 	}
 
 	private CommandController mockCommandController() {
-		ModifiableCommandController cc = new NewCommandController();
+		NewCommandController cc = new NewCommandController();
 		try {
 			InteractionCommand dosomthing = mock(InteractionCommand.class);
 			when(dosomthing.execute(any(InteractionContext.class))).thenThrow(new RuntimeException("Should not execute this command"));

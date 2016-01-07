@@ -177,7 +177,8 @@ public class CreateReadUpdateDeleteITCase extends JerseyTest {
                                                             "application/x-www-form-urlencoded",
                                                             "UTF-8"));
         postMethod.addRequestHeader("Content-Type", PostMethod.FORM_URL_ENCODED_CONTENT_TYPE);
-
+        postMethod.addRequestHeader("Accept", "application/atom+xml");
+        
         String personId = null;
         try {
             client.executeMethod(postMethod);

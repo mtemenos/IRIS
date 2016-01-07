@@ -69,7 +69,6 @@ import com.temenos.interaction.core.command.InteractionCommand;
 import com.temenos.interaction.core.command.InteractionCommand.Result;
 import com.temenos.interaction.core.command.InteractionContext;
 import com.temenos.interaction.core.command.InteractionException;
-import com.temenos.interaction.core.command.ModifiableCommandController;
 import com.temenos.interaction.core.command.NewCommandController;
 import com.temenos.interaction.core.command.NoopGETCommand;
 import com.temenos.interaction.core.entity.Entity;
@@ -90,6 +89,7 @@ import com.temenos.interaction.core.resource.EntityResource;
 import com.temenos.interaction.core.resource.RESTResource;
 import com.temenos.interaction.core.resource.ResourceTypeHelper;
 import com.temenos.interaction.core.web.RequestContext;
+import java.util.HashSet;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({HTTPHypermediaRIM.class})
@@ -171,7 +171,9 @@ public class TestResponseHTTPHypermediaRIM {
 		List<Object> allowHeader = response.getMetadata().get("Allow");
 		assertNotNull(allowHeader);
         assertEquals(1, allowHeader.size());
-        assertEquals("GET, OPTIONS, HEAD", allowHeader.get(0));
+        HashSet methodsAllowedDetected = new HashSet<String>(Arrays.asList(allowHeader.get(0).toString().split("\\s*,\\s*")));
+        HashSet methodsAllowed = new HashSet<String>(Arrays.asList("GET, OPTIONS, HEAD".split("\\s*,\\s*")));
+        assertEquals(methodsAllowed, methodsAllowedDetected);
 	}
 
 	/*
@@ -192,7 +194,9 @@ public class TestResponseHTTPHypermediaRIM {
 		List<Object> allowHeader = response.getMetadata().get("Allow");
 		assertNotNull(allowHeader);
         assertEquals(1, allowHeader.size());
-        assertEquals("GET, OPTIONS, HEAD", allowHeader.get(0));
+        HashSet methodsAllowedDetected = new HashSet<String>(Arrays.asList(allowHeader.get(0).toString().split("\\s*,\\s*")));
+        HashSet methodsAllowed = new HashSet<String>(Arrays.asList("GET, OPTIONS, HEAD".split("\\s*,\\s*")));
+        assertEquals(methodsAllowed, methodsAllowedDetected);
 	}
 
 	/*
@@ -213,7 +217,9 @@ public class TestResponseHTTPHypermediaRIM {
 		List<Object> allowHeader = response.getMetadata().get("Allow");
 		assertNotNull(allowHeader);
         assertEquals(1, allowHeader.size());
-        assertEquals("GET, OPTIONS, HEAD", allowHeader.get(0));
+        HashSet methodsAllowedDetected = new HashSet<String>(Arrays.asList(allowHeader.get(0).toString().split("\\s*,\\s*")));
+        HashSet methodsAllowed = new HashSet<String>(Arrays.asList("GET, OPTIONS, HEAD".split("\\s*,\\s*")));
+        assertEquals(methodsAllowed, methodsAllowedDetected);
 	}
 
 	/*
@@ -1029,7 +1035,7 @@ public class TestResponseHTTPHypermediaRIM {
 		};
 		
 		// create mock command controller
-		ModifiableCommandController mockCommandController = new NewCommandController();
+		NewCommandController mockCommandController = new NewCommandController();
 		mockCommandController.addCommand("GET", mockCommand);
 		mockCommandController.addCommand("DO", mockCommand);
 
@@ -1534,7 +1540,7 @@ public class TestResponseHTTPHypermediaRIM {
 	}
 	
 	protected Response getMockResponse(InteractionCommand mockCommand, InteractionCommand mockExceptionCommand, HttpHeaders httpHeaders) {
-		ModifiableCommandController mockCommandController = mock(ModifiableCommandController.class);
+		NewCommandController mockCommandController = mock(NewCommandController.class);
 		mockCommandController.addCommand("GET", mockCommand);
 		when(mockCommandController.fetchCommand("GET")).thenReturn(mockCommand);
 		when(mockCommandController.fetchCommand("DO")).thenReturn(mockCommand);
@@ -1555,7 +1561,7 @@ public class TestResponseHTTPHypermediaRIM {
 	}
 
 	protected Response getMockResponseWithErrorResource(InteractionCommand mockCommand) {
-		ModifiableCommandController mockCommandController = mock(ModifiableCommandController.class);
+		NewCommandController mockCommandController = mock(NewCommandController.class);
 		mockCommandController.addCommand("GET", mockCommand);
 		when(mockCommandController.fetchCommand("GET")).thenReturn(mockCommand);
 		when(mockCommandController.fetchCommand("DO")).thenReturn(mockCommand);

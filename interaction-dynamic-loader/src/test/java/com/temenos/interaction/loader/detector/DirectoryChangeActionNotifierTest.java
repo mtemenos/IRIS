@@ -21,9 +21,11 @@ package com.temenos.interaction.loader.detector;
  * #L%
  */
 
+import com.temenos.interaction.loader.detector.stub.DirectoryEventInterestedActionTestStub;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,14 +52,14 @@ public class DirectoryChangeActionNotifierTest {
        File tempDir = createTempDirectory();
        notifier.setResources(Collections.singletonList(tempDir));
        
-       Thread.currentThread().sleep(15000);
+       Thread.currentThread().sleep(3000);
        
        File tempFile = new File(tempDir,"test.file");
        tempFile.createNewFile();
-       Thread.currentThread().sleep(15000);
+       Thread.currentThread().sleep(3000);
        Assert.assertTrue(action.getCallCount() > 0);
        System.out.println(action.getLastEvent().getResource());
-
+       FileUtils.forceDelete(tempDir);
     }
     
     public static File createTempDirectory()

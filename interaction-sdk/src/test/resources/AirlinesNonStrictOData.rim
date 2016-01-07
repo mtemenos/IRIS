@@ -27,8 +27,8 @@ initial resource ServiceDocument {
 	entity: ServiceDocument
 	view: GETServiceDocument
 	path: "/"
-	GET -> Flights
 	GET -> Airports
+	GET -> Flights
 	GET -> FlightSchedules
 	GET -> Passengers
 	GET -> ErrorMessages
@@ -46,42 +46,6 @@ resource ErrorMessages {
 	view: NoopGET
 }
 
-
-resource Flights {
-	type: collection
-	entity: Flight
-	view: GETEntities {
-		properties [ filter="{filter}" ]
-	}
-	path: "/Flights()"
-	POST -> Flights_created
-	GET *-> flight {
-		parameters [ id="{flightID}" ]
-	}
-	GET *-> flightschedule {
-		title: "flightschedule"
-		parameters [ id="{flightScheduleNum}" ]
-	}
-}
-
-resource flight {
-	type: item
-	entity: Flight
-	view: GETEntity
-	path: "/Flights({id})"
-	GET -> flightschedule {
-		title: "flightschedule"
-		parameters [ id="{flightScheduleNum}" ]
-	}
-}
-
-resource Flights_created {
-	type: item
-	entity: Flight
-	actions [ CreateEntity ]
-	path: "/Flights()"
-	onerror --> ErrorMessages
-}
 
 resource Airports {
 	type: collection
@@ -124,6 +88,42 @@ resource Airports_created {
 	entity: Airport
 	actions [ CreateEntity ]
 	path: "/Airports()"
+}
+
+resource Flights {
+	type: collection
+	entity: Flight
+	view: GETEntities {
+		properties [ filter="{filter}" ]
+	}
+	path: "/Flights()"
+	POST -> Flights_created
+	GET *-> flight {
+		parameters [ id="{flightID}" ]
+	}
+	GET *-> flightschedule {
+		title: "flightschedule"
+		parameters [ id="{flightScheduleNum}" ]
+	}
+}
+
+resource flight {
+	type: item
+	entity: Flight
+	view: GETEntity
+	path: "/Flights({id})"
+	GET -> flightschedule {
+		title: "flightschedule"
+		parameters [ id="{flightScheduleNum}" ]
+	}
+}
+
+resource Flights_created {
+	type: item
+	entity: Flight
+	actions [ CreateEntity ]
+	path: "/Flights()"
+	onerror --> ErrorMessages
 }
 
 resource FlightSchedules {

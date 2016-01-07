@@ -1,8 +1,8 @@
-package com.temenos.interaction.core.command;
+package com.temenos.interaction.jdbc;
 
 /*
  * #%L
- * interaction-core
+ * interaction-jdbc-producer
  * %%
  * Copyright (C) 2012 - 2015 Temenos Holdings N.V.
  * %%
@@ -22,13 +22,14 @@ package com.temenos.interaction.core.command;
  */
 
 /**
- * Extension to the {@link CommandController} interface to mark registries capable of registering or unregistering new commands at runtime
- * @author pblair
- * @author trojanbug
+ * Define type of SQL Server we support
+ *
+ * @author sjunejo
+ *
  */
-public interface ModifiableCommandController 
-       extends CommandController {
-
-    public void addCommand(String name, InteractionCommand c);
-    public void removeCommand(String name);
+public enum ServerMode {
+    // Real server modes
+    MSSQL, ORACLE,
+    // H2 server compatibility modes. Used for testing.
+    H2_MSSQL, H2_ORACLE
 }

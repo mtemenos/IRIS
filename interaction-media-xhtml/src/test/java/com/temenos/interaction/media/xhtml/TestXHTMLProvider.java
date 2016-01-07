@@ -61,6 +61,23 @@ import com.temenos.interaction.core.entity.vocabulary.terms.TermValueType;
 import com.temenos.interaction.core.hypermedia.Link;
 import com.temenos.interaction.core.resource.CollectionResource;
 import com.temenos.interaction.core.resource.EntityResource;
+import java.io.StringReader;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+import org.custommonkey.xmlunit.ComparisonController;
+import org.custommonkey.xmlunit.Diff;
+import org.custommonkey.xmlunit.Difference;
+import org.custommonkey.xmlunit.DifferenceEngine;
+import org.custommonkey.xmlunit.DifferenceListener;
+import org.custommonkey.xmlunit.XMLUnit;
+import org.custommonkey.xmlunit.XpathEngine;
+import org.custommonkey.xmlunit.examples.MultiLevelElementNameAndTextQualifier;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
 
 public class TestXHTMLProvider {
 
@@ -150,9 +167,24 @@ public class TestXHTMLProvider {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		p.writeTo(cr, CollectionResource.class, Entity.class, null, MediaType.APPLICATION_XHTML_XML_TYPE, null, bos);
 
-		String responseString = new String(bos.toByteArray(), "UTF-8");
-		Assert.assertTrue(responseString.contains("<li><dl><dt>id</dt><dd>123</dd><dt>address</dt><dl><dt>houseNumber</dt><dd>45</dd><dt>postcode</dt><dd>WD8 1LK</dd></dl><dt>name</dt><dd>Fred</dd><dt>hobbies</dt><dd>Tennis,Basketball,Swimming</dd></dl><ul><li><a href=\"/Customer(123)\" rel=\"self\">123</a></li></ul></li>"));
-	}
+                String responseString = new String(bos.toByteArray(), "UTF-8");
+                XpathEngine engine = XMLUnit.newXpathEngine();
+                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                dbf.setValidating(false);
+                dbf.setNamespaceAware(false);
+                dbf.setFeature("http://xml.org/sax/features/namespaces", false);
+                dbf.setFeature("http://xml.org/sax/features/validation", false);
+                dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+                dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                Document responseDoc = db.parse(new InputSource(new StringReader(responseString)));
+
+                XPath xpath = XPathFactory.newInstance().newXPath();
+               // <li><dl><dt>id</dt><dd>123</dd><dt>address</dt><dl><dt>houseNumber</dt><dd>45</dd><dt>postcode</dt><dd>WD8 1LK</dd></dl><dt>name</dt><dd>Fred</dd><dt>hobbies</dt><dd>Tennis,Basketball,Swimming</dd></dl><ul><li><a href=\"/Customer(123)\" rel=\"self\">123</a></li></ul></li>"
+                // the simplest XPath getting us desired <li> element - only this one will have <dd> element equal to 123
+                String liNodeOfCustomer123XPath = "//li/dl[./dd=\"123\"]/dd[text()=\"Fred\"]";
+                Assert.assertNotNull(xpath.evaluate(liNodeOfCustomer123XPath, responseDoc, XPathConstants.NODE));
+        }
 	
 	@Test
 	public void testWriteGenericErrorResourceAcceptHTML() throws Exception {

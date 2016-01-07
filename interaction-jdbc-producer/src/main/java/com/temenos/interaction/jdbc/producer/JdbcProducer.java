@@ -57,8 +57,11 @@ import com.temenos.interaction.core.entity.EntityProperties;
 import com.temenos.interaction.core.entity.EntityProperty;
 import com.temenos.interaction.core.resource.CollectionResource;
 import com.temenos.interaction.core.resource.EntityResource;
+import com.temenos.interaction.jdbc.ServerMode;
 import com.temenos.interaction.jdbc.exceptions.JdbcException;
-import com.temenos.interaction.jdbc.producer.SqlCommandBuilder.ServerMode;
+import com.temenos.interaction.jdbc.producer.sql.ColumnTypesMap;
+import com.temenos.interaction.jdbc.producer.sql.SqlBuilder;
+import com.temenos.interaction.jdbc.producer.sql.SqlBuilderFactory;
 
 public class JdbcProducer {
     // Somewhere to store connection
@@ -158,8 +161,8 @@ public class JdbcProducer {
 
         List<OrderBy> orderBy = ODataParser.parseOrderBy(queryParams.getFirst(ODataParser.ORDERBY_KEY));
 
-        // Build an SQL command
-        SqlCommandBuilder sqlBuilder = new SqlCommandBuilder(tableName, key, accessProfile, colTypesMap, top, skip,
+        // Build an SQL command from an appropiate builder
+        SqlBuilder sqlBuilder = SqlBuilderFactory.getSqlBuilder(tableName, key, accessProfile, colTypesMap, top, skip,
                 orderBy, serverMode);
         String sqlCommand = sqlBuilder.getCommand();
 
@@ -307,19 +310,27 @@ public class JdbcProducer {
 
         // Extract server type from URL
         String[] tokens = url.split(":");
-        if (tokens[1].equals("oracle")) {
-            return ServerMode.ORACLE;
+
+        if (tokens != null && tokens.length > 1 && tokens[1] != null) {
+            String serverType = tokens[1];
+            if ("oracle".equals(serverType)) {
+                return ServerMode.ORACLE;
+            }
+
+            if ("mssql".equals(serverType) || "sqlserver".equals(serverType)) {
+                return ServerMode.MSSQL;
+            }
+
+            if ("h2".equals(serverType)) {
+                logger.warn("Running under H2 but no server compatibility mode specified. Defaulting to emulated MSSQL mode.");
+                return ServerMode.H2_MSSQL;
+            }
+
+            throw (new JdbcException(Status.PRECONDITION_FAILED, "JDBC Server type \"" + serverType
+                    + "\" not supported."));
         }
 
-        if (tokens[1].equals("mssql")) {
-            return ServerMode.MSSQL;
-        }
-
-        if (tokens[1].equals("h2")) {
-            logger.warn("Running under H2 but no server compatibility mode specified. Defaulting to emulated MSSQL mode.");
-            return ServerMode.H2_MSSQL;
-        }
-
-        throw (new JdbcException(Status.INTERNAL_SERVER_ERROR, "Unknown serveer type \"" + tokens[1] + "\"."));
+        throw (new JdbcException(Status.INTERNAL_SERVER_ERROR,
+                "Failed to detect JDBC server type from connection URL \"" + url.toString() + "\"."));
     }
 }

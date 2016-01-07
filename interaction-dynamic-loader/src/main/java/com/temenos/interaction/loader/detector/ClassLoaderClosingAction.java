@@ -31,8 +31,12 @@ import java.io.Closeable;
 import java.io.IOException;
 
 /**
- *
+ * Closes a ClassLoader marked to be closed and releases any system resources associated with it.
+ * 
+ * The ClassLoader needs to be an instance of Closeable.
+ * 
  * @author andres
+ * @author trojan
  */
 public class ClassLoaderClosingAction implements Action<ClassLoader> {
 

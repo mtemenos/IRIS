@@ -231,10 +231,8 @@ public class InteractionContext {
             		}
         		}
         	}
-    		if (logger.isDebugEnabled()) {
-            	for (String pathParam : pathParameters.keySet()) {
-            		logger.debug("PathParam " + pathParam + ":" + pathParameters.get(pathParam));
-            	}
+            for (String pathParam : pathParameters.keySet()) {		
+				logger.debug("PathParam " + pathParam + ":" + pathParameters.get(pathParam));
     		}
     	}
     	return id;

@@ -34,8 +34,7 @@ import org.slf4j.LoggerFactory;
  * @deprecated as of introduction of {@link MapBasedCommandController}, for compatibility with configuration generator referring to NewCommandController explicitly.
  */
 @Deprecated
-public class NewCommandController implements CommandController,
-       ModifiableCommandController {
+public class NewCommandController implements CommandController {
 	private final Logger logger = LoggerFactory.getLogger(NewCommandController.class);
 
 	protected Map<String, InteractionCommand> commands = new HashMap<String, InteractionCommand>();
@@ -91,7 +90,6 @@ public class NewCommandController implements CommandController,
 		return (commands.get(name) != null);
 	}
 
-    @Override
     public void removeCommand(String name) {
         commands.remove(name);
     }

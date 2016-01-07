@@ -63,7 +63,6 @@ import com.temenos.interaction.core.command.InteractionCommand;
 import com.temenos.interaction.core.command.InteractionCommand.Result;
 import com.temenos.interaction.core.command.InteractionContext;
 import com.temenos.interaction.core.command.InteractionException;
-import com.temenos.interaction.core.command.ModifiableCommandController;
 import com.temenos.interaction.core.command.NewCommandController;
 import com.temenos.interaction.core.entity.Entity;
 import com.temenos.interaction.core.entity.EntityMetadata;
@@ -1003,8 +1002,8 @@ public class TestResourceStateMachine {
 		assertEquals("root.initial>GET>root.initial", links.get(2).getId());
 	}
 
-	private ModifiableCommandController mockCommandController() {
-		ModifiableCommandController cc = new NewCommandController();
+	private NewCommandController mockCommandController() {
+		NewCommandController cc = new NewCommandController();
 		try {
 			InteractionCommand notfound = mock(InteractionCommand.class);
 			when(notfound.execute(any(InteractionContext.class))).thenReturn(Result.FAILURE);

@@ -39,6 +39,11 @@ import com.temenos.interaction.core.MultivaluedMapImpl;
 import com.temenos.interaction.core.entity.Entity;
 import com.temenos.interaction.core.entity.EntityProperties;
 import com.temenos.interaction.core.entity.EntityProperty;
+import net.javacrumbs.jsonunit.core.Option;
+import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
+import org.custommonkey.xmlunit.DetailedDiff;
+import org.custommonkey.xmlunit.Diff;
+import org.custommonkey.xmlunit.examples.MultiLevelElementNameAndTextQualifier;
 
 public class TestMule extends FunctionalTestCase {
 
@@ -58,10 +63,13 @@ public class TestMule extends FunctionalTestCase {
 	    assertNotNull(result);
 	    assertNull(result.getExceptionPayload());
 	    assertFalse(result.getPayload() instanceof NullPayload);
-	    assertEquals(MAP_TO_XML, result.getPayloadAsString());
+            Diff xmlDiff = new Diff(MAP_TO_XML, result.getPayloadAsString());
+            DetailedDiff detDiff = new DetailedDiff(xmlDiff);
+            detDiff.overrideElementQualifier(new MultiLevelElementNameAndTextQualifier(2));
+            assertTrue(detDiff.similar());
 	}
 
-	private final static String DATAMAPPER_XML = "{\"description\":\"21\",\"name\":\"Dirk\"}";
+	private final static String DATAMAPPER_JSON = "{\"description\":\"21\",\"name\":\"Dirk\"}";
 
 	@Test
 	public void testDatamapper() throws Exception {
@@ -73,7 +81,10 @@ public class TestMule extends FunctionalTestCase {
 	    assertNotNull(result);
 	    assertNull(result.getExceptionPayload());
 	    assertFalse(result.getPayload() instanceof NullPayload);
-	    assertEquals(DATAMAPPER_XML, result.getPayloadAsString());
+            JsonFluentAssert
+                    .assertThatJson(DATAMAPPER_JSON)
+                    .when(Option.IGNORING_ARRAY_ORDER)
+                    .isEqualTo(result.getPayloadAsString());
 	}
 	
 	private final static String VIEW_ENTITY_XML = "<?xml version='1.0' encoding='UTF-8'?><viewcommand><pathparameters><key>value</key></pathparameters><queryparameters><key>value</key></queryparameters></viewcommand>";
@@ -92,7 +103,10 @@ public class TestMule extends FunctionalTestCase {
 	    assertNotNull(result);
 	    assertNull(result.getExceptionPayload());
 	    assertFalse(result.getPayload() instanceof NullPayload);
-	    assertEquals(VIEW_ENTITY_XML, result.getPayloadAsString());
+            Diff xmlDiff = new Diff(VIEW_ENTITY_XML, result.getPayloadAsString());
+            DetailedDiff detDiff = new DetailedDiff(xmlDiff);
+            detDiff.overrideElementQualifier(new MultiLevelElementNameAndTextQualifier(2));
+            assertTrue(detDiff.similar());
 	}
 	
 	private final static String ACTION_ON_ENTITY_XML = "<?xml version='1.0' encoding='UTF-8'?><actioncommand><pathparameters><id>CUST123</id></pathparameters><queryparameters><authorise>true</authorise></queryparameters><entity><name>Customer</name><id>123</id><name>Fred</name></entity></actioncommand>";
@@ -115,7 +129,8 @@ public class TestMule extends FunctionalTestCase {
 	    assertNotNull(result);
 	    assertNull(result.getExceptionPayload());
 	    assertFalse(result.getPayload() instanceof NullPayload);
-	    assertEquals(ACTION_ON_ENTITY_XML, result.getPayloadAsString());
+            Diff xmlDiff = new Diff(ACTION_ON_ENTITY_XML, result.getPayloadAsString());
+            assertTrue(xmlDiff.similar());
 	}
 
 }

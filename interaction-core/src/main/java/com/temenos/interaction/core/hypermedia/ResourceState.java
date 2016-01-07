@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory;
 
 public class ResourceState implements Comparable<ResourceState> {
 	private final static Logger logger = LoggerFactory.getLogger(ResourceState.class);
+    private static final String[] DEFAULT_ITEM_RELATIONS = new String[] { "item" };
+
 	
 	/* the parent state (same entity, pseudo state is same path) */
 	private final ResourceState parent;
@@ -157,7 +159,7 @@ public class ResourceState implements Comparable<ResourceState> {
 		this.actions = actions;
 		this.uriSpecification = uriSpec;
 		if (rels == null) {
-			this.rels = "item".split(" ");
+			this.rels = DEFAULT_ITEM_RELATIONS;
 		} else {
 			this.rels = rels;
 		}

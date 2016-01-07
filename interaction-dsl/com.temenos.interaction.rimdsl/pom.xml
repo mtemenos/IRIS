@@ -45,6 +45,13 @@
 						</goals>
 					</execution>
 				</executions>
+                                <dependencies>
+                                    <dependency>
+                                        <groupId>org.antlr</groupId>
+                                        <artifactId>antlr</artifactId>
+                                        <version>3.2</version>
+                                    </dependency>
+                                </dependencies>
 			</plugin>
 		</plugins>
 		<pluginManagement>

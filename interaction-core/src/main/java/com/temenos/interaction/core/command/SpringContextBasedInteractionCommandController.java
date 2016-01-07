@@ -26,9 +26,10 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 
 /**
- * Implementation of {@link CommandController} delegating the
- * command resolution to underlying Spring ApplicationContext. The bean
- * resolution is based on id or name attributes of the beans in the context matching name passed literally.
+ * Implementation of {@link CommandController} delegating the command resolution
+ * to underlying Spring ApplicationContext. The bean resolution is based on id
+ * or name attributes of the beans in the context matching name passed
+ * literally.
  *
  * @author trojanbug
  */
@@ -50,13 +51,14 @@ public class SpringContextBasedInteractionCommandController
     @Override
     public InteractionCommand fetchCommand(String name) {
         if (applicationContext == null) {
-            logger.warn("applicationContext not initialised in fetchCommand of " + this.getClass());
+            logger.warn("ApplicationContext not initialised in fetchCommand of {}", this.getClass().getName());
             return null;
         }
         try {
+            logger.trace("{} requesting bean implementing InteractionCommand under name {} from underlying ApplicationContext", this.getClass().getName(), name);
             return applicationContext.getBean(name, InteractionCommand.class);
         } catch (BeansException ex) {
-            logger.debug("could not find bean implementing interaction command under name " + name);
+            logger.trace("Could not find bean implementing interaction command under name {}", name);
             return null;
         }
     }
@@ -75,9 +77,11 @@ public class SpringContextBasedInteractionCommandController
             logger.warn("applicationContext not initialised in isValidCommand of " + this.getClass());
             return false;
         }
-         try {
+        try {
+            logger.trace("{} requesting bean implementing InteractionCommand under name {} from underlying ApplicationContext", this.getClass().getName(), name);
             return (applicationContext.getBean(name, InteractionCommand.class) != null);
         } catch (BeansException ex) {
+            logger.trace("Could not find bean implementing interaction command under name {}", name);
             return false;
         }
     }

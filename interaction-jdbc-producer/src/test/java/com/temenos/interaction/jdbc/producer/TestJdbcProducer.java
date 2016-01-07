@@ -50,8 +50,8 @@ import com.temenos.interaction.core.entity.Metadata;
 import com.temenos.interaction.core.hypermedia.ResourceState;
 import com.temenos.interaction.core.resource.CollectionResource;
 import com.temenos.interaction.core.resource.EntityResource;
+import com.temenos.interaction.jdbc.ServerMode;
 import com.temenos.interaction.jdbc.exceptions.JdbcException;
-import com.temenos.interaction.jdbc.producer.SqlCommandBuilder.ServerMode;
 
 /**
  * Test JdbcProducer class.

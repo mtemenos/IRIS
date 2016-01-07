@@ -1,13 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package com.temenos.interaction.core.command;
+package com.temenos.interaction.loader.objectcreation;
 
 /*
  * #%L
- * interaction-core
+ * interaction-dynamic-loader
  * %%
  * Copyright (C) 2012 - 2015 Temenos Holdings N.V.
  * %%
@@ -26,20 +21,13 @@ package com.temenos.interaction.core.command;
  * #L%
  */
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- *
- * @author andres
+ * 
+ * @author trojanbug
+ * @param <PARAM> The class of the parameter to query the factory for the object with
+ * @param <RESULT> The class produced by the factory
  */
-public class DefaultRefreshableCommandController         
-        extends NewCommandController
-implements RefreshableWithMapCommandController {
-
-    @Override
-    public void refresh(Map<String, InteractionCommand> context) {
-        commands = new HashMap(context);
-    }
-    
+public interface ParameterizedFactory<PARAM,RESULT> {
+    public RESULT getForObject(PARAM param);    
 }

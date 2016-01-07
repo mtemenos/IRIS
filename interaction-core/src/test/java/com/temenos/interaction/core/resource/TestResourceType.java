@@ -27,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
-import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 
@@ -40,6 +39,9 @@ import org.junit.Test;
 
 import com.temenos.interaction.core.NestedObject;
 import com.temenos.interaction.core.entity.Entity;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 public class TestResourceType {
 
@@ -117,24 +119,28 @@ public class TestResourceType {
 	
 	@SuppressWarnings("rawtypes")
 	private<E> Type getTestTypeVariable(String typeName) {
-		final String fTypeName = typeName;
-		Type t = new TypeVariable() {
-			@Override
-			public Type[] getBounds() {
-				return null;
-			}
-
-			@Override
-			public GenericDeclaration getGenericDeclaration() {
-				return null;
-			}
-
-			@Override
-			public String getName() {
-				return fTypeName;
-			}
-			
-		};
+		Type t = (Type) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                        new Class[]{TypeVariable.class},
+                        new TestTypeVariableHandler(typeName));
 		return t;
 	}
+        
+        private static class TestTypeVariableHandler implements InvocationHandler {
+
+            private final String name;
+
+            public TestTypeVariableHandler(String name) {
+                this.name = name;
+            }
+
+            @Override
+            public Object invoke(Object o, Method method, Object[] os) throws Throwable {
+                final String methodName = method.getName();
+
+                if ("getName".equals(methodName)) {
+                    return name;
+                }
+                return null;
+            }
+        }
 }

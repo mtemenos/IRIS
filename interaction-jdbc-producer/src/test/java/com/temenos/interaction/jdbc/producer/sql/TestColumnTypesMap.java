@@ -1,4 +1,4 @@
-package com.temenos.interaction.jdbc.producer;
+package com.temenos.interaction.jdbc.producer.sql;
 
 /* 
  * #%L
@@ -30,6 +30,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
+
+import com.temenos.interaction.jdbc.producer.AbstractJdbcProducerTest;
+import com.temenos.interaction.jdbc.producer.JdbcProducer;
+import com.temenos.interaction.jdbc.producer.sql.ColumnTypesMap;
 
 /**
  * Test ColumnTypesMap class.

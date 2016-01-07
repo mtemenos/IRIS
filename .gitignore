@@ -28,3 +28,6 @@ src-gen
 *~
 /interaction-core/nb-configuration.xml
 /nb-configuration.xml
+/interaction-examples/interaction-odata-airline/nbactions.xml
+/interaction-examples/interaction-odata-airline/nb-configuration.xml
+/nbactions.xml

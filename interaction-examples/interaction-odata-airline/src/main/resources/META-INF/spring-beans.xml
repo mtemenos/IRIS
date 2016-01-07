@@ -40,7 +40,8 @@
 			</list>
 		</property>
 		<property name="ignoreUnresolvablePlaceholders" value="true"/>
-	</bean>
+                <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+        </bean>
 
 	<!-- Metadata -->	
 	<bean id="metadataManager" class="com.temenos.interaction.core.resource.ResourceMetadataManager">
@@ -163,9 +164,12 @@
 		<constructor-arg name="producer" ref="odataProducer" />
 	</bean>
 	
-	<bean id="GETEntities" class="com.temenos.interaction.commands.odata.GETEntitiesCommand">
+	<bean id="GETEntities1" class="com.temenos.interaction.commands.odata.GETEntitiesCommand">
 		<constructor-arg name="producer" ref="odataProducer" />
 	</bean>
+        
+        <alias alias="GETEntities" name="GETEntities1"/>
+        
 	<bean id="GETNavProperty" class="com.temenos.interaction.commands.odata.GETNavPropertyCommand">
 		<constructor-arg name="producer" ref="odataProducer" />
 	</bean>
@@ -184,7 +188,28 @@
 	<bean id="configLoader" class="com.temenos.interaction.core.resource.ConfigLoader"/>
 	
 	<!-- Command controller -->
-        <bean id="commands" class="com.temenos.interaction.core.command.SpringContextAwareInteractionCommandController"/>
+        <bean id="commands" class="com.temenos.interaction.core.command.ChainingCommandController">
+            <property name="commandControllers">
+                <list>
+                    <bean class="com.temenos.interaction.core.command.SpringContextAwareInteractionCommandController"/> 
+                </list>
+            </property>
+            
+        </bean>
+         
+        <bean id="updateAfterChangeAction" class="com.temenos.interaction.loader.detector.SpringBasedLoaderAction">
+            <property name="useCurrentContextAsParent" value="true"/>
+            <property name="parentChainingCommandController" ref="commands"/>
+        </bean>
+        
+        <bean id="dirWatchdog" class="com.temenos.interaction.loader.detector.DirectoryChangeActionNotifier">
+            <property name="resources">
+                <value>${hot.deploy.dir}</value>
+            </property>
+           <property name="listeners">
+                <ref bean="updateAfterChangeAction"/>
+            </property>
+        </bean>
 <!--       
 	<bean id="commands" class="com.temenos.interaction.core.command.NewCommandController">
 		<constructor-arg name="commands">

@@ -30,6 +30,7 @@
     
     <bean id="testCommand1" class="com.temenos.interaction.core.command.TestCommand"/>
     <bean id="testCommand2" class="com.temenos.interaction.core.command.TestCommand"/>
+    <bean id="testCommand3" class="com.temenos.interaction.core.command.TestCommand" scope="prototype"/>
     <bean id="commandController" class="com.temenos.interaction.core.command.SpringContextAwareInteractionCommandController"/>
 	
 </beans>

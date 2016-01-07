@@ -38,28 +38,55 @@ import java.util.concurrent.TimeUnit;
 
 import com.temenos.interaction.core.loader.Action;
 import com.temenos.interaction.core.loader.FileEvent;
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * TODO: Document me!
+ * Executes actions every time a change (creation, modification or deletion) in
+ * a collection of directories is detected.
+ *
+ * The implementation sets a scheduled task whenever setResources or
+ * setListeners is called, which executes a command (in this case
+ * ListenerNotificationTask) every 10 seconds (by default). ListenerNotificationTask watches
+ * the directories for changes and is responsible of calling the execute method
+ * of all listener's action with the directory that changed as parameter.
  *
  * @author andres
- *
+ * @author trojanbug
+ * @author cmclopes
  */
 public class DirectoryChangeActionNotifier implements DirectoryChangeDetector<Action<FileEvent<File>>> {
+
+    private static final Logger logger = LoggerFactory.getLogger(DirectoryChangeActionNotifier.class);
 
     private Collection<? extends File> resources = new ArrayList();
     private Collection<? extends Action<FileEvent<File>>> listeners = new ArrayList();
     private WatchService watchService;
     private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> scheduledTask = null;
+    private long intervalSeconds = 10;
 
     @Override
     public void setResources(Collection<? extends File> resources) {
-        if (resources == null) {
-            this.resources = new ArrayList<File>();
+        ArrayList<File> existingResources = new ArrayList<File>();
+        // temporary fix to avoid crashes when trying to watch inexisting directories
+        // just create them if they don't exist
+        for (File file : resources) {
+            if (!file.exists()) {
+                try {
+                    FileUtils.forceMkdir(file);
+                    existingResources.add(file);
+                } catch (IOException ex) {
+                    logger.warn("Could not create configured directory to monitor.", ex);
+                }
+            } else {
+                existingResources.add(file);
+            }
         }
-        this.resources = new ArrayList<File>(resources);
-        initWatchers(resources);
+
+        this.resources = existingResources;
+        initWatchers(this.resources);
     }
 
     @Override
@@ -95,35 +122,66 @@ public class DirectoryChangeActionNotifier implements DirectoryChangeDetector<Ac
             }
 
             watchService = ws;
-            scheduledTask = executorService.scheduleWithFixedDelay(new ListenerNotificationTask(watchService, getListeners()), 10, 10, TimeUnit.SECONDS);
+            scheduledTask = executorService.scheduleWithFixedDelay(new ListenerNotificationTask(watchService, getListeners(), getIntervalSeconds() * 1000), 5, getIntervalSeconds(), TimeUnit.SECONDS);
         } catch (IOException ex) {
             throw new RuntimeException("Error configuring directory change listener - unexpected IOException", ex);
         }
     }
 
+    public long getIntervalSeconds() {
+        return intervalSeconds;
+    }
+
+    public void setIntervalSeconds(long intervalSeconds) {
+        this.intervalSeconds = intervalSeconds;
+    }
+
+    /**
+     * Runnable class that uses a provided WatchService on files and directories
+     * to execute all listener's actions for detected events.
+     *
+     * It currently ignores all events in a user-specified time interval after
+     * the first accepted event to prevent multiples executions of the listener's for the same user-event.
+     * Example: Creating a single file in a folder (on UNIX system) raises two events: the ENTRY_CREATE
+     * and the ENTRY_MODIFY on folder. This will be changed to a scheduled run to catch the first system event
+     * and after the user-specified time interval executes one single call to all the listener's.
+     *
+     * @author andres
+     * @author trojanbug
+     * @author cmclopes
+     */
     protected static class ListenerNotificationTask implements Runnable {
 
         private WatchService watchService;
         private Collection<? extends Action<FileEvent<File>>> listeners;
+        private long lastRun = 0;
+        private long interval = 0;
 
-        public ListenerNotificationTask(WatchService watchService, Collection<? extends Action<FileEvent<File>>> listeners) {
+        public ListenerNotificationTask(WatchService watchService, Collection<? extends Action<FileEvent<File>>> listeners, long interval) {
             this.watchService = watchService;
             this.listeners = listeners;
+            this.interval = interval;
         }
 
         @Override
         public void run() {
             try {
-                WatchKey key = watchService.take(); //3.
-                for (WatchEvent<?> e : key.pollEvents()) { //4.
-                    WatchEvent.Kind<?> kind = e.kind();
-                    if (kind != StandardWatchEventKinds.OVERFLOW) {
-                        Path dir = (Path) key.watchable();
-                        Path fullPath = dir.resolve((Path) e.context());
-                        FileEvent<File> newEvent = new DirectoryChangeEvent(fullPath.toFile());
-                        for (Action<FileEvent<File>> action : listeners) {
-                            action.execute(newEvent);
+                WatchKey key = watchService.take();
+                for (WatchEvent<?> e : key.pollEvents()) {
+                    // TODO change this for a scheduled run in the future
+                    if (System.currentTimeMillis() - lastRun > interval) {
+                        WatchEvent.Kind<?> kind = e.kind();
+                        if (kind != StandardWatchEventKinds.OVERFLOW) {
+                            Path dir = (Path) key.watchable();
+                            Path fullPath = dir.resolve((Path) e.context());
+                            logger.debug("Detected change ({}) in watched directory: {}", kind, fullPath);
+                            FileEvent<File> newEvent = new DirectoryChangeEvent(fullPath.toFile());
+                            for (Action<FileEvent<File>> action : listeners) {
+                                logger.trace("Notifying {} about the change in {}", action, fullPath);
+                                action.execute(newEvent);
+                            }
                         }
+                        lastRun = System.currentTimeMillis();
                     }
                 }
                 key.reset();
@@ -134,6 +192,13 @@ public class DirectoryChangeActionNotifier implements DirectoryChangeDetector<Ac
 
     }
 
+    /**
+     * Helper class for getting a directory from a File instance.
+     *
+     * @author andres
+     * @author trojanbug
+     * @author cmclopes
+     */
     public static class DirectoryChangeEvent implements FileEvent<File> {
 
         private File directory;

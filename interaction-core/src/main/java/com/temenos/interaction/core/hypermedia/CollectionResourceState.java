@@ -25,18 +25,19 @@ package com.temenos.interaction.core.hypermedia;
 import java.util.List;
 
 public class CollectionResourceState extends ResourceState {
+    private static final String[] RELATIONS = new String[]{ "collection" };
 
 	public CollectionResourceState(String entityName, String name, List<Action> actions, String path) {
-		super(entityName, name, actions, path, "collection".split(" "));
+		super(entityName, name, actions, path, RELATIONS);
 	}
 	public CollectionResourceState(String entityName, String name, List<Action> actions, String path, UriSpecification uriSpec) {
-		super(entityName, name, actions, path, "collection".split(" "), uriSpec);
+		super(entityName, name, actions, path, RELATIONS, uriSpec);
 	}
 	public CollectionResourceState(String entityName, String name, List<Action> actions, String path, String[] rels, UriSpecification uriSpec) {
-		super(entityName, name, actions, path, rels != null ? rels : "collection".split(" "), uriSpec);
+		super(entityName, name, actions, path, rels != null ? rels : RELATIONS, uriSpec);
 	}
 	public CollectionResourceState(String entityName, String name, List<Action> actions, String path, String[] rels, UriSpecification uriSpec, ResourceState errorState) {
-		super(entityName, name, actions, path, rels != null ? rels : "collection".split(" "), uriSpec, errorState);
+		super(entityName, name, actions, path, rels != null ? rels : RELATIONS, uriSpec, errorState);
 	}
 	
 }

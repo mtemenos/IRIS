@@ -1,13 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package com.temenos.interaction.core.command;
+package com.temenos.interaction.loader.detector.stub;
 
 /*
  * #%L
- * interaction-core
+ * interaction-dynamic-loader
  * %%
  * Copyright (C) 2012 - 2015 Temenos Holdings N.V.
  * %%
@@ -26,12 +21,34 @@ package com.temenos.interaction.core.command;
  * #L%
  */
 
-import java.util.Map;
+import com.temenos.interaction.core.loader.Action;
+import com.temenos.interaction.core.loader.FileEvent;
+import java.io.File;
 
 /**
  *
  * @author andres
  */
-public interface RefreshableWithMapCommandController extends CommandController, Refreshable<Map<String,InteractionCommand>> {
+public class DirectoryEventInterestedActionTestStub implements Action<FileEvent<File>> {
+    
+    private int callCount = 0;
+    private FileEvent<File> lastEvent;
+    
+    @Override
+    public void execute(FileEvent<File> event) {
+       callCount++;
+       lastEvent = event;
+    }
+    
+    public int getCallCount() {
+        return callCount;
+    }
+
+    /**
+     * @return the lastEvent
+     */
+    public FileEvent<File> getLastEvent() {
+        return lastEvent;
+    }
     
 }

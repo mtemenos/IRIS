@@ -55,19 +55,19 @@ public class TestNewCommandController {
 
 	@Test(expected = AssertionError.class)
 	public void testAddNullCommand() {
-		ModifiableCommandController cc = new NewCommandController();
+		NewCommandController cc = new NewCommandController();
 		cc.addCommand("commandName", null);
 	}
 
 	@Test(expected = AssertionError.class)
 	public void testAddNullName() {
-		ModifiableCommandController cc = new NewCommandController();
+		NewCommandController cc = new NewCommandController();
 		cc.addCommand(null, mock(InteractionCommand.class));
 	}
 
 	@Test
 	public void testCommandRegistered() {
-		ModifiableCommandController cc = new NewCommandController();
+		NewCommandController cc = new NewCommandController();
 		InteractionCommand command = mock(InteractionCommand.class);
 		cc.addCommand("DO", command);
 		assertEquals(command, cc.fetchCommand("DO"));
@@ -75,7 +75,7 @@ public class TestNewCommandController {
 
 	@Test
 	public void testIsValidCommandCommandRegistered() {
-		ModifiableCommandController cc = new NewCommandController();
+		NewCommandController cc = new NewCommandController();
 		InteractionCommand command = mock(InteractionCommand.class);
 		cc.addCommand("DO", command);
 		assertTrue(cc.isValidCommand("DO"));
