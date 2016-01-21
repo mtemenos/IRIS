@@ -89,11 +89,13 @@ import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
 import com.theoryinpractise.halbuilder.api.Representation;
 import com.theoryinpractise.halbuilder.api.RepresentationException;
 import com.theoryinpractise.halbuilder.api.RepresentationFactory;
+import com.theoryinpractise.halbuilder.json.JsonRepresentationReader;
+import com.theoryinpractise.halbuilder.json.JsonRepresentationWriter;
 import com.theoryinpractise.halbuilder.standard.StandardRepresentationFactory;
 
 @Provider
-@Consumes({com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_XML, com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_JSON, MediaType.APPLICATION_JSON})
-@Produces({com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_XML, com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_JSON, MediaType.APPLICATION_JSON})
+@Consumes({HALMediaType.APPLICATION_HAL_XML, HALMediaType.APPLICATION_HAL_JSON, MediaType.APPLICATION_JSON})
+@Produces({HALMediaType.APPLICATION_HAL_XML, HALMediaType.APPLICATION_HAL_JSON, MediaType.APPLICATION_JSON})
 public class HALProvider implements MessageBodyReader<RESTResource>, MessageBodyWriter<RESTResource> {
 	private final Logger logger = LoggerFactory.getLogger(HALProvider.class);
 
@@ -103,12 +105,17 @@ public class HALProvider implements MessageBodyReader<RESTResource>, MessageBody
 	private Request requestContext;
 	private Metadata metadata = null;
 	private ResourceStateProvider resourceStateProvider;
-    private RepresentationFactory representationFactory = new StandardRepresentationFactory();
+    private RepresentationFactory representationFactory;
 
 	public HALProvider(Metadata metadata, ResourceStateProvider resourceStateProvider) {
 		this(metadata);
 		this.resourceStateProvider = resourceStateProvider;
 	}
+
+	public HALProvider(Metadata metadata, ResourceStateProvider resourceStateProvider, RepresentationFactory representationFactory) {
+		this(metadata, representationFactory);
+		this.resourceStateProvider = resourceStateProvider;
+	}			
 
 	@Deprecated
 	public HALProvider(Metadata metadata, ResourceStateMachine rsm) {
@@ -117,15 +124,27 @@ public class HALProvider implements MessageBodyReader<RESTResource>, MessageBody
 	}
 
 	public HALProvider(Metadata metadata) {
+		this(metadata, irisRepresentationFactory());
 		this.metadata = metadata;
 		assert(metadata != null);
+	}
+
+	public HALProvider(Metadata metadata, RepresentationFactory representationFactory) {
+		this.metadata = metadata;
+		this.representationFactory = representationFactory;
+	}
+
+	private static RepresentationFactory irisRepresentationFactory() {
+		return new StandardRepresentationFactory().
+			withReader(MediaType.APPLICATION_JSON, JsonRepresentationReader.class).
+			withRenderer(MediaType.APPLICATION_JSON, JsonRepresentationWriter.class);
 	}
 	
 	@Override
 	public boolean isWriteable(Class<?> type, Type genericType,
 			Annotation[] annotations, MediaType mediaType) {
-		if (mediaType.equals(com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_XML_TYPE)
-				|| mediaType.equals(com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_JSON_TYPE)
+		if (mediaType.equals(HALMediaType.APPLICATION_HAL_XML_TYPE)
+				|| mediaType.equals(HALMediaType.APPLICATION_HAL_JSON_TYPE)
 				|| mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
 			return ResourceTypeHelper.isType(type, genericType, EntityResource.class)
 					|| ResourceTypeHelper.isType(type, genericType, CollectionResource.class);
@@ -221,7 +240,7 @@ public class HALProvider implements MessageBodyReader<RESTResource>, MessageBody
 			Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, Object> httpHeaders,
 			OutputStream entityStream) throws IOException,
-			WebApplicationException{
+			WebApplicationException {
 		logger.debug("Writing " + mediaType);
 		Representation halResource;
 		try {
@@ -231,20 +250,13 @@ public class HALProvider implements MessageBodyReader<RESTResource>, MessageBody
 			logger.error("Invalid link syntax", e);
 			throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
 		}
-		String representation = null;
-		if (halResource != null && mediaType.isCompatible(com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_XML_TYPE)) {
-			representation = halResource.toString(RepresentationFactory.HAL_XML);
-		} else if (halResource != null && mediaType.isCompatible(com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_JSON_TYPE)) {
-			representation = halResource.toString(RepresentationFactory.HAL_JSON);
-		} else if (halResource != null && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-			representation = halResource.toString(RepresentationFactory.HAL_JSON);
-		} else {
-			throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-		}
+		String baseMediaType = HALMediaType.baseMediaType( mediaType );
+		String representation = halResource.toString(baseMediaType);
+		String charset = HALMediaType.charset( mediaType, "UTF-8" );
 
 		logger.debug("Produced [" + representation + "]");
-		// TODO handle requested encoding?
-		entityStream.write(representation.getBytes("UTF-8"));
+
+		entityStream.write(representation.getBytes(charset));
 	}
 
 	private Link findLinkByTransition(Collection<Link> links, Transition transition) {
@@ -382,21 +394,50 @@ public class HALProvider implements MessageBodyReader<RESTResource>, MessageBody
 	}
 
 	/** populate a Map from an Entity
-	 *  TODO implement nested structures and collections
 	 */
-	protected void buildFromEntity(Map<String, Object> map, Entity entity) {
-
-		EntityProperties entityProperties = entity.getProperties();
+	protected void buildFromEntity(Map<String, Object> map, Entity entity, String entityName) {
+		logger.debug("Serialising entity " + entityName);
+		EntityMetadata entityMetadata = metadata.getEntityMetadata(entityName);
+		if (entityMetadata == null)
+			throw new IllegalStateException("Entity metadata could not be found [" + entityName + "]");
+ 
+		buildFromEntityProperties(entityMetadata, "", map, entity.getProperties());
+	}
+		
+	protected void buildFromEntityProperties(EntityMetadata entityMetadata, String prefix, Map<String, Object> map, EntityProperties entityProperties) {
 		Map<String, EntityProperty> properties = entityProperties.getProperties();
 				
-		for (Map.Entry<String, EntityProperty> property : properties.entrySet()) 
-		{
+		for (Map.Entry<String, EntityProperty> property : properties.entrySet()) {
 			String propertyName = property.getKey(); 
-			EntityProperty propertyValue = (EntityProperty) property.getValue();
-	   		map.put(propertyName, propertyValue.getValue());	
+			logger.debug("property key " + propertyName + " name " + property.getValue().getName());
+      String qualifiedName = lengthenPrefix(prefix, propertyName);
+      
+      if (entityMetadata.getPropertyVocabulary(qualifiedName) != null )
+        map.put( propertyName, entityPropertyValueToPOJO(entityMetadata, qualifiedName, property.getValue().getValue()));
 		}
 	}
-	
+
+	protected Object entityPropertyValueToPOJO(EntityMetadata entityMetadata, String prefix, Object propertyValue) {
+		logger.debug("property value: " + propertyValue);
+		if ( propertyValue == null ) return "";
+		logger.debug("property value has type " + propertyValue.getClass());
+		if ( propertyValue instanceof EntityProperties ) {
+			Map<String,Object> newMap = new HashMap<String,Object>();
+			buildFromEntityProperties(entityMetadata, prefix, newMap, (EntityProperties)propertyValue);
+			return newMap;
+		} else if ( propertyValue instanceof Collection ) {
+			List newList = new ArrayList<EntityProperties>();
+			for (Object element : (Collection<?>) propertyValue ) {
+				newList.add(entityPropertyValueToPOJO(entityMetadata, prefix, element));
+			}
+			return newList;
+		} else if ( propertyValue instanceof EntityProperty ) {
+			return ((EntityProperty)propertyValue).getValue();
+		} else {
+			return propertyValue;
+		}
+	}
+
 	/** populate a Map from a java bean
 	 *  TODO implement nested structures and collections
 	 */
@@ -446,10 +487,10 @@ public class HALProvider implements MessageBodyReader<RESTResource>, MessageBody
 				halResource.withProperty(key, propertyMap.get(key));
 			}
 		} else if (ResourceTypeHelper.isType(type, genericType, EntityResource.class, Entity.class)) {
-				@SuppressWarnings("unchecked")
+			logger.debug("transforming EntityResource<Entity>");
 				EntityResource<Entity> entityResource = (EntityResource<Entity>) resource;
 				Map<String, Object> propertyMap = new HashMap<String, Object>();
-				buildFromEntity(propertyMap, entityResource.getEntity());
+				buildFromEntity(propertyMap, entityResource.getEntity(), entityResource.getEntityName());
 				// add properties to HAL resource
 				for (String key : propertyMap.keySet()) {
 					halResource.withProperty(key, propertyMap.get(key));
@@ -571,21 +612,15 @@ public class HALProvider implements MessageBodyReader<RESTResource>, MessageBody
 			MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
 			throws IOException, WebApplicationException {
 
-		// check media type can be handled, isReadable must have been called
-		assert(ResourceTypeHelper.isType(type, genericType, EntityResource.class) 
-				&& (mediaType.isCompatible(com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_XML_TYPE) 
-						|| mediaType.isCompatible(com.temenos.interaction.media.hal.MediaType.APPLICATION_HAL_JSON_TYPE)));
-
 		//Parse hal+json into an Entity object
 		Entity entity = buildEntityFromHal(entityStream, mediaType);
 		return new EntityResource<Entity>(entity);
 	}
-	
+
 	private Entity buildEntityFromHal(InputStream entityStream, MediaType mediaType) {
 		try {
 			// create the hal resource
 			String baseUri = uriInfo.getBaseUri().toASCIIString();
-			RepresentationFactory representationFactory = new StandardRepresentationFactory();
 			ReadableRepresentation halResource = representationFactory.readRepresentation(mediaType.toString(), new InputStreamReader(entityStream));
 			// assume the client providing the representation knows something we don't
 			String resourcePath = halResource.getResourceLink() != null ? halResource.getResourceLink().getHref() : null;

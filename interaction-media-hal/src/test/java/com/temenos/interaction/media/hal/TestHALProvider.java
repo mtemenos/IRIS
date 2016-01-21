@@ -73,10 +73,13 @@ import com.temenos.interaction.core.MultivaluedMapImpl;
 import com.temenos.interaction.core.command.CommandHelper;
 import com.temenos.interaction.core.entity.Entity;
 import com.temenos.interaction.core.entity.EntityMetadata;
+import com.temenos.interaction.core.entity.EntityProperty;
+import com.temenos.interaction.core.entity.EntityProperties;
 import com.temenos.interaction.core.entity.Metadata;
 import com.temenos.interaction.core.entity.MetadataParser;
 import com.temenos.interaction.core.entity.vocabulary.TermFactory;
 import com.temenos.interaction.core.entity.vocabulary.Vocabulary;
+import com.temenos.interaction.core.entity.vocabulary.terms.TermComplexGroup;
 import com.temenos.interaction.core.entity.vocabulary.terms.TermComplexType;
 import com.temenos.interaction.core.entity.vocabulary.terms.TermValueType;
 import com.temenos.interaction.core.hypermedia.Action;
@@ -91,7 +94,6 @@ import com.temenos.interaction.core.resource.ConfigLoader;
 import com.temenos.interaction.core.resource.EntityResource;
 import com.temenos.interaction.core.resource.MetaDataResource;
 import com.temenos.interaction.core.resource.RESTResource;
-
 import ch.qos.logback.classic.gaffer.NestingType;
 import ch.qos.logback.classic.gaffer.PropertyUtil;
 
@@ -150,6 +152,7 @@ public class TestHALProvider {
 		assertEquals(new Long(2), entity.getProperties().getProperty("age").getValue());
 	}
 	
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testDeserialiseResolveEntityName() throws IOException, URISyntaxException {
@@ -187,6 +190,29 @@ public class TestHALProvider {
 		InputStream entityStream = new ByteArrayInputStream(strEntityStream.getBytes());
 		GenericEntity<EntityResource<Entity>> ge = new GenericEntity<EntityResource<Entity>>(new EntityResource<Entity>()) {}; 
 		EntityResource<Entity> er = (EntityResource<Entity>) hp.readFrom(RESTResource.class, ge.getType(), null, MediaType.APPLICATION_HAL_JSON_TYPE, null, entityStream);
+		assertNotNull(er.getEntity());
+		Entity entity = er.getEntity();
+		assertEquals("Children", entity.getName());
+	}
+        
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testDeserialisePlainJSON() throws IOException, URISyntaxException {
+		ResourceStateMachine sm = new ResourceStateMachine(new ResourceState("Children", "initial", new ArrayList<Action>(), "/children"));
+		HALProvider hp = new HALProvider(createMockChildVocabMetadata(), new DefaultResourceStateProvider(sm),
+										 new com.theoryinpractise.halbuilder.standard.StandardRepresentationFactory().withReader(javax.ws.rs.core.MediaType.APPLICATION_JSON, com.theoryinpractise.halbuilder.json.JsonRepresentationReader.class)
+										 );
+		UriInfo mockUriInfo = mock(UriInfo.class);
+		when(mockUriInfo.getBaseUri()).thenReturn(new URI("http://www.temenos.com/rest.svc/"));
+		hp.setUriInfo(mockUriInfo);
+		Request requestContext = mock(Request.class);
+		when(requestContext.getMethod()).thenReturn("GET");
+		hp.setRequestContext(requestContext);
+
+		String strEntityStream = "{ \"_links\": { \"self\": { \"href\": \"http://www.temenos.com/rest.svc/children\" } }, \"name\": \"noah\", \"age\": 2 }";
+		InputStream entityStream = new ByteArrayInputStream(strEntityStream.getBytes());
+		GenericEntity<EntityResource<Entity>> ge = new GenericEntity<EntityResource<Entity>>(new EntityResource<Entity>()) {}; 
+		EntityResource<Entity> er = (EntityResource<Entity>) hp.readFrom(RESTResource.class, ge.getType(), null, javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE, null, entityStream);
 		assertNotNull(er.getEntity());
 		Entity entity = er.getEntity();
 		assertEquals("Children", entity.getName());

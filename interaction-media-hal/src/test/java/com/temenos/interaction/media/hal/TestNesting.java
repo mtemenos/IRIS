@@ -23,12 +23,16 @@ package com.temenos.interaction.media.hal;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,6 +40,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
 import org.junit.Before;
@@ -60,12 +66,22 @@ import org.odata4j.edm.EdmSimpleType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.temenos.interaction.core.command.CommandHelper;
+import com.temenos.interaction.core.entity.Entity;
 import com.temenos.interaction.core.entity.EntityMetadata;
+import com.temenos.interaction.core.entity.EntityProperties;
 import com.temenos.interaction.core.entity.Metadata;
 import com.temenos.interaction.core.entity.vocabulary.Vocabulary;
+import com.temenos.interaction.core.entity.vocabulary.terms.TermComplexGroup;
 import com.temenos.interaction.core.entity.vocabulary.terms.TermComplexType;
+import com.temenos.interaction.core.entity.vocabulary.terms.TermListType;
 import com.temenos.interaction.core.entity.vocabulary.terms.TermValueType;
+import com.temenos.interaction.core.hypermedia.Action;
+import com.temenos.interaction.core.hypermedia.DefaultResourceStateProvider;
+import com.temenos.interaction.core.hypermedia.ResourceState;
+import com.temenos.interaction.core.hypermedia.ResourceStateMachine;
+import com.temenos.interaction.core.hypermedia.ResourceStateProvider;
 import com.temenos.interaction.core.resource.EntityResource;
+import com.temenos.interaction.core.resource.RESTResource;
 
 /** Tests for output of complex OEntity structures to HAL JSON
  */
@@ -103,13 +119,16 @@ public class TestNesting {
 		vocs.setPropertyVocabulary("age", vocBody);
 
 		Vocabulary vocRides = new Vocabulary();
+		vocRides.setTerm(new TermListType(true));
 		vocRides.setTerm(new TermComplexType(true));
 		vocs.setPropertyVocabulary("rides", vocRides);
 		Vocabulary vocHorseName = new Vocabulary();
 		vocHorseName.setTerm(new TermValueType(TermValueType.TEXT));
+     	vocHorseName.setTerm(new TermComplexGroup("rides"));
 		vocs.setPropertyVocabulary("HorseName", vocHorseName, Collections.enumeration(Collections.singletonList("rides")));
 		Vocabulary vocHorseSize = new Vocabulary();
-		vocHorseName.setTerm(new TermValueType(TermValueType.TEXT));
+		vocHorseSize.setTerm(new TermValueType(TermValueType.TEXT));
+     	vocHorseSize.setTerm(new TermComplexGroup("rides"));
 		vocs.setPropertyVocabulary("HorseSize", vocHorseSize, Collections.enumeration(Collections.singletonList("rides")));
 		
 		Metadata metadata = new Metadata("Family");
@@ -238,6 +257,71 @@ public class TestNesting {
 
 		String expectedJSON = "{'_links':{'self':{'href':'http://www.temenos.com/rest.svc/'}},'age':'2','name':'noah','rides':[{'HorseSize':'12.2','HorseName':'Harley'}]}".replace('\'','\"');
 
+		String responseString = makeSingleLineString(bos);
+		System.err.println(responseString);
+
+		Map<String,Object> expectedData = parseJson(expectedJSON);
+		Map<String,Object> actualData   = parseJson(responseString);
+
+		assertEquals(expectedData, actualData);
+	}
+
+
+	@Test
+	public void testSerialiseEmptyEntityResource() throws Exception {
+		Metadata vocab = createMockRiderVocabMetadata();
+
+		EntityProperties properties = new EmptyEntity().getProperties(vocab.getEntityMetadata("Riders"));
+		Entity emptyEntity = new Entity("", properties);
+
+		EntityResource<Entity> er = CommandHelper.createEntityResource(emptyEntity, Entity.class);
+        er.setEntityName("Riders");
+        
+		HALProvider hp = new HALProvider(vocab);
+		UriInfo mockUriInfo = mock(UriInfo.class);
+		when(mockUriInfo.getBaseUri()).thenReturn(new URI("http://www.temenos.com/rest.svc/"));
+		hp.setUriInfo(mockUriInfo);
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		hp.writeTo(er, EntityResource.class, Entity.class, null, MediaType.APPLICATION_HAL_JSON_TYPE, null, bos);
+
+		String expectedJSON = "{'_links':{'self':{'href':'http://www.temenos.com/rest.svc/'}},'age':'','name':'','rides':[{'HorseSize':'','HorseName':''}]}".replace('\'','\"');
+		String responseString = makeSingleLineString(bos);
+		System.err.println(responseString);
+
+		Map<String,Object> expectedData = parseJson(expectedJSON);
+		Map<String,Object> actualData   = parseJson(responseString);
+
+		assertEquals(expectedData, actualData);
+	}
+
+	@Test
+	public void testSerialiseEntityResource() throws Exception {
+		Metadata vocab = createMockRiderVocabMetadata();
+		ResourceStateMachine sm = new ResourceStateMachine(new ResourceState("Riders", "initial", new ArrayList<Action>(), "/riders"));
+		HALProvider hp = new HALProvider(vocab, new DefaultResourceStateProvider(sm));
+
+		UriInfo mockUriInfo = mock(UriInfo.class);
+		when(mockUriInfo.getBaseUri()).thenReturn(new URI("http://www.temenos.com/rest.svc/"));
+		when(mockUriInfo.getPath()).thenReturn("riders/123");
+		hp.setUriInfo(mockUriInfo);
+
+		Request requestContext = mock(Request.class);
+		when(requestContext.getMethod()).thenReturn("GET");
+		hp.setRequestContext(requestContext);
+
+		String inputContent = "{'_links':{'self':{'href':'http://www.temenos.com/rest.svc/riders'}},'age':'13','name':'Huw','rides':[{'HorseSize':'14.1','HorseName':'Molly'}]}}".replace('\'','\"');
+		InputStream entityStream = new ByteArrayInputStream(inputContent.getBytes());
+		GenericEntity<EntityResource<Entity>> ge = new GenericEntity<EntityResource<Entity>>(new EntityResource<Entity>()) {}; 
+		EntityResource<Entity> er = (EntityResource<Entity>) hp.readFrom(RESTResource.class, ge.getType(), null, MediaType.APPLICATION_HAL_JSON_TYPE, null, entityStream);
+        er.setEntityName("Riders");
+
+
+		
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		hp.writeTo(er, EntityResource.class, Entity.class, null, MediaType.APPLICATION_HAL_JSON_TYPE, null, bos);
+
+		
+		String expectedJSON = "{'_links':{'self':{'href':'http://www.temenos.com/rest.svc/'}},'age':13,'name':'Huw','rides':[{'HorseSize':'14.1','HorseName':'Molly'}]}".replace('\'','\"');
 		String responseString = makeSingleLineString(bos);
 		System.err.println(responseString);
 

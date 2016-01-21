@@ -27,6 +27,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -2012,4 +2013,39 @@ public class TestResourceStateMachine {
 		}
 		return false;
 	}
+	
+
+    /* 
+     * Check that when there is a circular transition link registration does not 
+     * go into an infinite loop. 
+     */ 
+    @Test 
+    public void testCircularTransition() { 
+        // Create a couple of states. 
+        ResourceState initialState = new ResourceState("rubbish", "rubbish", new ArrayList<Action>(), "/rubbish"); 
+        initialState.setInitial(true); 
+        ResourceState newState = new ResourceState("rubbish", "rubbish", new ArrayList<Action>(), "/rubbish"); 
+ 
+        // Create a circular link between the states. 
+        Transition transition1 = new Transition.Builder().flags(Transition.FOR_EACH).method("GET").target(newState) 
+                .build(); 
+        initialState.addTransition(transition1); 
+        Transition transition2 = new Transition.Builder().flags(Transition.FOR_EACH).method("GET").target(initialState) 
+                .build(); 
+        newState.addTransition(transition2); 
+
+        // Create a state machine 
+        ResourceStateMachine stateMachine = new ResourceStateMachine(initialState); 
+
+        // Try to register. In the failing condition this may take some time to 
+        // run out of memory but in that case we are going to fail anyway. In 
+        // the working state it will return rapidly. 
+        try { 
+            stateMachine.register(initialState, "GET"); 
+        } catch (StackOverflowError e) { 
+            fail("Registration failed with stack overflow error."); 
+        } catch (Exception e) { 
+            fail("Registration failed with unexpected exception: " + e); 
+        } 
+    }  	
 }

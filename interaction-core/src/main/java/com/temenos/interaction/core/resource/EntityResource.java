@@ -44,10 +44,9 @@ import com.temenos.interaction.core.hypermedia.Transition;
  */
 @XmlRootElement(name = "resource")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class EntityResource<T> implements RESTResource {
+public class EntityResource<T> implements RESTResource, Cloneable {
 	@XmlAnyElement(lax=true)
 	private T entity;
-
 	
 	/* injected by during build response phase */
 	@XmlTransient
@@ -128,5 +127,23 @@ public class EntityResource<T> implements RESTResource {
 	@Override
 	public void setEntityTag(String entityTag) {
 		this.entityTag = entityTag;
+	}
+
+	/**
+	 * Create a shallow copy of this EntityResource using the same entity, links and etag
+	 * as this instance.
+	 * @return
+	 */
+	@Override
+	public EntityResource<T> clone() throws CloneNotSupportedException {
+		EntityResource<T> entityResourceClone = this.createNewEntityResource(this.entityName, this.entity);
+		entityResourceClone.setEmbedded(this.embedded);
+		entityResourceClone.setLinks(this.links);
+		entityResourceClone.setEntityTag(this.entityTag);
+		return entityResourceClone;
+	}
+	
+	protected <E> EntityResource<E> createNewEntityResource(String name, E entity){
+		return new EntityResource<E>(name, entity);
 	}
 }
