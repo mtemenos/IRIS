@@ -41,7 +41,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
-import com.temenos.interaction.core.hypermedia.Action;
 import com.temenos.interaction.core.hypermedia.Event;
 import com.temenos.interaction.core.hypermedia.MethodNotAllowedException;
 import com.temenos.interaction.core.hypermedia.PathTree;
@@ -200,11 +199,7 @@ public class SpringDSLResourceStateProvider implements ResourceStateProvider, Dy
 	}
 	
 	public void unload(String name) {	    
-		ResourceState state = resources.remove(name);
-		
-		for(Action action: state.getActions()) {
-		    pathTree.remove(state.getPath(), action.getMethod());
-		}
+	    resources.remove(name);
 	}
 
 	@Override

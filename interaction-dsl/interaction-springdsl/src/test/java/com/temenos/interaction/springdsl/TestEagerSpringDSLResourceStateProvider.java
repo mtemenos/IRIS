@@ -21,49 +21,46 @@ package com.temenos.interaction.springdsl;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
 import com.temenos.interaction.core.cache.CacheConcurrentImpl;
 import com.temenos.interaction.core.cache.CacheExtended;
 import com.temenos.interaction.core.hypermedia.ResourceState;
 import com.temenos.interaction.core.hypermedia.ResourceStateProvider;
 import com.temenos.interaction.core.loader.ResourceStateLoadingStrategy;
 import com.temenos.interaction.core.loader.SpringResourceStateLoadingStrategy;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author kwieconkowski
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration
 public class TestEagerSpringDSLResourceStateProvider extends TestSpringDSLResourceStateProvider {
 
-    @Autowired
-    private EagerSpringDSLResourceStateProvider springDSLResourceStateProvider;
-    private boolean initialized;
-
+    @BeforeClass
+    public static void setUpClass() {
+        ctx = new ClassPathXmlApplicationContext("classpath:/com/temenos/interaction/springdsl/TestEagerSpringDSLResourceStateProvider-context.xml");     
+    }
+    
     @Before
-    public void setUp() throws Exception {
-        /* We want to enforce that tests in the parent class TestSpringDSLResourceStateProvider
-        are invoked with our children class EagerSpringDSLResourceStateProvider, to ensure back compatibility */
-        if (!initialized) {
-            initialized = true;
-            resourceStateProvider = springDSLResourceStateProvider;
-        }
+    public void setUp() {
+        resourceStateProvider = (ResourceStateProvider) ctx.getBean("resourceStateProvider");
     }
 
     @Test
     public void testGetResourceState() {
+        EagerSpringDSLResourceStateProvider springDSLResourceStateProvider = getDefaultClass();
         ResourceState resourceState = springDSLResourceStateProvider.getResourceState("SimpleModel_Home_home");
         assertNotNull(resourceState);
         assertEquals("home", resourceState.getName());
@@ -104,13 +101,9 @@ public class TestEagerSpringDSLResourceStateProvider extends TestSpringDSLResour
     }
 
     @Test
-    public void testSetLoadingStrategy_betterCodeCoverage() {
-        springDSLResourceStateProvider.setLoadingStrategy(new SpringResourceStateLoadingStrategy());
-    }
-
-    @Test
     public void testIsLoaded() {
-        assertTrue(springDSLResourceStateProvider.isLoaded("SimpleModel_Home_home"));
+        EagerSpringDSLResourceStateProvider springDSLResourceStateProvider = getDefaultClass();
+       assertTrue(springDSLResourceStateProvider.isLoaded("SimpleModel_Home_home"));
     }
 
     @Test

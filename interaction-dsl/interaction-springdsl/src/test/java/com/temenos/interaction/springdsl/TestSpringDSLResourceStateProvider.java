@@ -22,32 +22,42 @@ package com.temenos.interaction.springdsl;
  */
 
 
-import com.temenos.interaction.core.hypermedia.Event;
-import com.temenos.interaction.core.hypermedia.ResourceState;
-import com.temenos.interaction.core.hypermedia.ResourceStateProvider;
-import com.temenos.interaction.core.hypermedia.Transition;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-//ApplicationContext will be loaded from "classpath:/com/temenos/interaction/springdsl/TestSpringDSLResourceStateProvider-context.xml"
-@ContextConfiguration
+import com.temenos.interaction.core.hypermedia.Event;
+import com.temenos.interaction.core.hypermedia.ResourceState;
+import com.temenos.interaction.core.hypermedia.ResourceStateProvider;
+import com.temenos.interaction.core.hypermedia.Transition;
+
 public class TestSpringDSLResourceStateProvider {
 
-	@Autowired
-	protected ResourceStateProvider resourceStateProvider;
+    static ApplicationContext ctx;
+    protected ResourceStateProvider resourceStateProvider;
+    
+    @BeforeClass
+    public static void setUpClass() {
+        ctx = new ClassPathXmlApplicationContext("classpath:/com/temenos/interaction/springdsl/TestSpringDSLResourceStateProvider-context.xml");     
+    }
+    
+    @Before
+    public void setUp() {
+        resourceStateProvider = (ResourceStateProvider) ctx.getBean("resourceStateProvider");
+    }
 
-	@Test
+    @Test
 	public void testGetResourceState() {
 		ResourceState actual = resourceStateProvider.getResourceState("SimpleModel_Home_home");
 		assertEquals("home", actual.getName());
@@ -89,4 +99,44 @@ public class TestSpringDSLResourceStateProvider {
 		assertEquals("home", foundPutState.getName());
 	}
 
+    @Test
+    public void testIsLoaded() {
+        SpringDSLResourceStateProvider rsp = (SpringDSLResourceStateProvider) resourceStateProvider;
+
+        assertFalse(rsp.isLoaded("SimpleModel_Home_home"));
+        assertFalse(rsp.isLoaded("inexistentState"));
+
+        // this is the current way of loading resources...
+        ResourceState unused = resourceStateProvider.getResourceState("SimpleModel_Home_home");
+
+        assertTrue(rsp.isLoaded("SimpleModel_Home_home"));
+        assertFalse(rsp.isLoaded("inexistentState"));
+    }
+
+    @Test
+    public void testUnload() {
+        SpringDSLResourceStateProvider rsp = (SpringDSLResourceStateProvider) resourceStateProvider;
+        
+        // loading the resource
+        ResourceState unused = resourceStateProvider.getResourceState("SimpleModel_Home_home");
+        
+        assertTrue(rsp.isLoaded("SimpleModel_Home_home"));
+        rsp.unload("SimpleModel_Home_home");
+        assertFalse(rsp.isLoaded("SimpleModel_Home_home"));
+    }
+
+    @Test
+    public void testUnloadInexistentResource() {
+        SpringDSLResourceStateProvider rsp = (SpringDSLResourceStateProvider) resourceStateProvider;
+        assertEquals("Number of resources: ", 1, rsp.getResourceMethodsByState().size());
+
+        String inexistentStateName = "inexistentState";
+        // try to load the resource
+        ResourceState unused = resourceStateProvider.getResourceState(inexistentStateName);
+
+        assertFalse(rsp.isLoaded(inexistentStateName));
+        rsp.unload(inexistentStateName);
+        assertEquals("Number of resources: ", 1, rsp.getResourceMethodsByState().size());
+    }
+    
 }
