@@ -42,7 +42,7 @@
 
 	<bean id="cacheDefault" class="com.temenos.interaction.core.cache.CacheConcurrentImpl"/>
 
-	<bean id="resourceStateProvider" class="com.temenos.interaction.springdsl.SpringDSLResourceStateProvider">
+	<bean id="resourceStateProvider" class="com.temenos.interaction.springdsl.SpringDSLResourceStateProvider" scope="prototype">
 		<property name="resourceMap" ref="resourceMap" />		
 	</bean>
 

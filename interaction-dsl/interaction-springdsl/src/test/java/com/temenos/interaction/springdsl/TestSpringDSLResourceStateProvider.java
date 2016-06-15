@@ -107,7 +107,7 @@ public class TestSpringDSLResourceStateProvider {
         assertFalse(rsp.isLoaded("inexistentState"));
 
         // this is the current way of loading resources...
-        ResourceState unused = resourceStateProvider.getResourceState("SimpleModel_Home_home");
+        ResourceState unused = rsp.getResourceState("SimpleModel_Home_home");
 
         assertTrue(rsp.isLoaded("SimpleModel_Home_home"));
         assertFalse(rsp.isLoaded("inexistentState"));
@@ -118,7 +118,7 @@ public class TestSpringDSLResourceStateProvider {
         SpringDSLResourceStateProvider rsp = (SpringDSLResourceStateProvider) resourceStateProvider;
         
         // loading the resource
-        ResourceState unused = resourceStateProvider.getResourceState("SimpleModel_Home_home");
+        ResourceState unused = rsp.getResourceState("SimpleModel_Home_home");
         
         assertTrue(rsp.isLoaded("SimpleModel_Home_home"));
         rsp.unload("SimpleModel_Home_home");
@@ -132,7 +132,7 @@ public class TestSpringDSLResourceStateProvider {
 
         String inexistentStateName = "inexistentState";
         // try to load the resource
-        ResourceState unused = resourceStateProvider.getResourceState(inexistentStateName);
+        ResourceState unused = rsp.getResourceState(inexistentStateName);
 
         assertFalse(rsp.isLoaded(inexistentStateName));
         rsp.unload(inexistentStateName);
