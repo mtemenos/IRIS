@@ -97,7 +97,7 @@ public class TestLazyResourceDelegate {
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getPathParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));
         when(uriInfo.getQueryParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));        
-        when(uriInfo.getPath()).thenReturn("myResource");
+        when(uriInfo.getPath(eq(false))).thenReturn("myResource");
         
         lazyResourceDelegate.get(headers, id, uriInfo);
         
@@ -106,7 +106,7 @@ public class TestLazyResourceDelegate {
         uriInfo = mock(UriInfo.class);
         when(uriInfo.getPathParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));
         when(uriInfo.getQueryParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));        
-        when(uriInfo.getPath()).thenReturn("");
+        when(uriInfo.getPath(eq(false))).thenReturn("");
         
         lazyResourceDelegate.get(headers, id, uriInfo);
         
@@ -140,7 +140,7 @@ public class TestLazyResourceDelegate {
 		UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getPathParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));	
         when(uriInfo.getQueryParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));        
-		when(uriInfo.getPath()).thenReturn("myResource");
+		when(uriInfo.getPath(eq(false))).thenReturn("myResource");
 		EntityResource resource = mock(EntityResource.class);
 	
 		lazyResourceDelegate.post(headers, id, uriInfo, resource);
@@ -177,7 +177,7 @@ public class TestLazyResourceDelegate {
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getPathParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));     
         when(uriInfo.getQueryParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));        
-        when(uriInfo.getPath()).thenReturn("myResource");
+        when(uriInfo.getPath(eq(false))).thenReturn("myResource");
         
         InMultiPart inMP = mock(InMultiPart.class);        
         lazyResourceDelegate.post(headers, uriInfo, inMP);
@@ -213,7 +213,7 @@ public class TestLazyResourceDelegate {
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getPathParameters(eq(false))).thenReturn(mock(MultivaluedMap.class)); 
         when(uriInfo.getQueryParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));        
-        when(uriInfo.getPath()).thenReturn("myResource");
+        when(uriInfo.getPath(eq(false))).thenReturn("myResource");
         EntityResource resource = mock(EntityResource.class);
         
         lazyResourceDelegate.put(headers, id, uriInfo, resource);  
@@ -248,7 +248,7 @@ public class TestLazyResourceDelegate {
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getPathParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));    
         when(uriInfo.getQueryParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));        
-        when(uriInfo.getPath()).thenReturn("myResource");
+        when(uriInfo.getPath(eq(false))).thenReturn("myResource");
         EntityResource resource = mock(EntityResource.class);
         
         lazyResourceDelegate.delete(headers, id, uriInfo);  
@@ -283,7 +283,7 @@ public class TestLazyResourceDelegate {
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getPathParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));     
         when(uriInfo.getQueryParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));                
-        when(uriInfo.getPath()).thenReturn("myResource");
+        when(uriInfo.getPath(eq(false))).thenReturn("myResource");
         EntityResource resource = mock(EntityResource.class);
         
         lazyResourceDelegate.options(headers, id, uriInfo);  
@@ -320,7 +320,7 @@ public class TestLazyResourceDelegate {
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getPathParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));    
         when(uriInfo.getQueryParameters(eq(false))).thenReturn(mock(MultivaluedMap.class));        
-        when(uriInfo.getPath()).thenReturn("myResource");
+        when(uriInfo.getPath(eq(false))).thenReturn("myResource");
         
         InMultiPart inMP = mock(InMultiPart.class);        
         lazyResourceDelegate.put(headers, uriInfo, inMP);

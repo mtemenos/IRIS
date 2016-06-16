@@ -135,7 +135,7 @@ public class LazyResourceDelegate implements HTTPResourceInteractionModel, Dynam
     }
 	
 	private HTTPHypermediaRIM getResource(UriInfo uriInfo, String httpMethod) throws MethodNotAllowedException {
-        ResourceState resourceState = resourceStateProvider.getResourceState(httpMethod, "/" + uriInfo.getPath());
+        ResourceState resourceState = resourceStateProvider.getResourceState(httpMethod, "/" + uriInfo.getPath(false));
         
         if(resourceState == null) {
         	return null;
